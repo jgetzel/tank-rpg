@@ -1,6 +1,13 @@
 use bevy::math::{Quat, Vec2, Vec3};
-use bevy::prelude::{Component, Entity, GlobalTransform, Query, Res, Time, Transform, With};
+use bevy::prelude::{
+    BuildChildren, Commands, Component, default, Entity, GlobalTransform, Query, Res,
+    Sprite, SpriteBundle, Time, Transform,
+};
+use bevy::sprite::Anchor;
 use bevy_rapier2d::dynamics::Velocity;
+use bevy_rapier2d::prelude::{Collider, Damping, LockedAxes, RigidBody};
+use crate::game_plugins::assets::GameAssets;
+use crate::game_plugins::environment::{PLAYER_LAYER, TURRET_LAYER};
 use crate::game_plugins::input_helper::Input;
 
 #[derive(Component)]
@@ -26,7 +33,7 @@ impl Default for Player {
 pub struct PlayerTurret {
     pub owner: Option<Entity>,
     pub direction: Vec2,
-    pub bullet_speed: f32
+    pub bullet_speed: f32,
 }
 
 impl Default for PlayerTurret {
@@ -34,8 +41,55 @@ impl Default for PlayerTurret {
         PlayerTurret {
             owner: None,
             direction: Vec2::default(),
-            bullet_speed: 600.
+            bullet_speed: 600.,
         }
+    }
+}
+
+static TANK_SCALE: f32 = 2. / 3.;
+static TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
+static TURRET_POSITION: [f32; 2] = [0., 30.];
+static TANK_COLLIDER_RADIUS: f32 = 60.;
+
+pub fn init_player(position: Vec2) -> impl Fn(Commands, Res<GameAssets>) {
+    move |mut commands: Commands, game_assets: Res<GameAssets>| {
+        commands.spawn((
+            Player::default(),
+            SpriteBundle {
+                texture: game_assets.tank_gray.clone(),
+                transform: Transform {
+                    scale: Vec3::ONE * TANK_SCALE,
+                    translation: position.extend(PLAYER_LAYER),
+                    ..default()
+                },
+                ..default()
+            },
+            RigidBody::Dynamic,
+            Collider::ball(TANK_COLLIDER_RADIUS),
+            LockedAxes::ROTATION_LOCKED,
+            Velocity::default(),
+            Damping {
+                linear_damping: 5.,
+                ..default()
+            }
+        ))
+            .with_children(|parent| {
+                parent.spawn((
+                    PlayerTurret::default(),
+                    SpriteBundle {
+                        texture: game_assets.tank_gray_turret.clone(),
+                        sprite: Sprite {
+                            anchor: Anchor::Custom(Vec2::from(TURRET_ANCHOR)),
+                            ..default()
+                        },
+                        transform: Transform {
+                            translation: Vec2::from(TURRET_POSITION).extend(TURRET_LAYER),
+                            ..default()
+                        },
+                        ..default()
+                    }
+                ));
+            });
     }
 }
 

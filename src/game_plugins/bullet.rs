@@ -1,6 +1,8 @@
 use bevy::input::Input;
-use bevy::math::Vec2;
-use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, MouseButton, Quat, Query, Res, Transform, Vec3, With};
+use bevy::prelude::{
+    Children, Commands, Component, Entity, GlobalTransform, MouseButton, Quat, Query, Res,
+    Transform, Vec3, With
+};
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;

@@ -1,8 +1,7 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Camera, EventReader, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
+use bevy::prelude::{Camera, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
-use bevy::input::mouse::MouseButtonInput;
 use bevy::render::camera::RenderTarget;
 use crate::game_plugins::camera::MainCamera;
 

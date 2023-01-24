@@ -1,17 +1,15 @@
-use std::borrow::Borrow;
-use std::ops::Deref;
-use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_rapier2d::render::RapierDebugRenderPlugin;
+use bevy::prelude::*;
 use bevy_rapier2d::plugin::{RapierConfiguration, RapierPhysicsPlugin};
 use bevy_rapier2d::prelude::NoUserData;
-use bevy_rapier2d::render::RapierDebugRenderPlugin;
 use crate::game_plugins::assets::{AssetsLoading, check_assets_loaded, GameAssets, load_assets};
 use crate::game_plugins::bullet::fire_bullet;
 use crate::game_plugins::camera::{camera_move, init_camera};
-use crate::game_plugins::environment::{init_background, init_player};
+use crate::game_plugins::environment::{init_background};
 use crate::game_plugins::input_helper;
 use crate::game_plugins::input_helper::{keyboard_events, mouse_position};
-use crate::game_plugins::player::{player_move, player_turret_rotate};
+use crate::game_plugins::player::{init_player, player_move, player_turret_rotate};
 
 mod game_plugins;
 

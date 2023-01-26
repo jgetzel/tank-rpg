@@ -3,7 +3,7 @@ use bevy::prelude::{Camera, GlobalTransform, KeyCode, Query, Res, ResMut, Window
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
 use bevy::render::camera::RenderTarget;
-use crate::game_plugins::camera::MainCamera;
+use crate::camera::MainCamera;
 
 #[derive(Default, Resource)]
 pub struct Input {

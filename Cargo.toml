@@ -1,5 +1,5 @@
 [package]
-name = "tank-rpg"
+name = "tank_rpg"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = "0.9.1"
 bevy_rapier2d = "0.20.0"
+bevy_renet = "0.0.6"
 bevy-inspector-egui = "0.17.0"
 
 phf = { version = "0.11.1", features = ["macros"]}

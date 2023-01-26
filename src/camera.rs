@@ -2,8 +2,8 @@ use std::iter::zip;
 use bevy::prelude::{Camera, Camera2dBundle, Commands, Query, Res, Transform, With, Without, Component};
 use bevy::time::Time;
 use bevy::utils::default;
-use crate::game_plugins::environment::CAMERA_LAYER;
-use crate::game_plugins::player::Player;
+use crate::environment::CAMERA_LAYER;
+use crate::player::Player;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 

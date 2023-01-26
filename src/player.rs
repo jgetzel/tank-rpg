@@ -6,9 +6,9 @@ use bevy::prelude::{
 use bevy::sprite::Anchor;
 use bevy_rapier2d::dynamics::Velocity;
 use bevy_rapier2d::prelude::{Collider, Damping, LockedAxes, RigidBody};
-use crate::game_plugins::assets::GameAssets;
-use crate::game_plugins::environment::{PLAYER_LAYER, TURRET_LAYER};
-use crate::game_plugins::input_helper::Input;
+use crate::assets::GameAssets;
+use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
+use crate::input_helper::Input;
 
 #[derive(Component)]
 pub struct Player {

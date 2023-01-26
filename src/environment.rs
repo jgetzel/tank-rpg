@@ -1,6 +1,6 @@
 use bevy::prelude::{ Commands, default, Res, Transform};
 use bevy::sprite::{ SpriteBundle };
-use crate::game_plugins::assets::GameAssets;
+use crate::assets::GameAssets;
 
 pub static BACKGROUND_LAYER: f32 = -10.;
 pub static PLAYER_LAYER: f32 = 0.;

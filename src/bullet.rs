@@ -7,9 +7,9 @@ use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
-use crate::game_plugins::assets::GameAssets;
-use crate::game_plugins::environment::BULLET_LAYER;
-use crate::game_plugins::player::{Player, PlayerTurret};
+use crate::assets::GameAssets;
+use crate::environment::BULLET_LAYER;
+use crate::player::{Player, PlayerTurret};
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;

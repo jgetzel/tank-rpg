@@ -1,6 +1,11 @@
 use bevy::asset::{AssetServer, Handle, HandleUntyped, LoadState};
 use bevy::prelude::{Commands, Image, Res, ResMut, Resource, State};
-use crate::AppState;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum AppState {
+    Loading,
+    InGame,
+}
 
 #[derive(Default, Resource)]
 pub struct GameAssets {

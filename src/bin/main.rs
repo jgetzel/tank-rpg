@@ -7,8 +7,7 @@ use tank_rpg::assets::{AppState, AssetsLoading, check_assets_loaded, GameAssets,
 use tank_rpg::bullet::fire_bullet;
 use tank_rpg::camera::{camera_move, init_camera};
 use tank_rpg::environment::init_background;
-use tank_rpg::{input_helper};
-use tank_rpg::input_helper::{keyboard_events, mouse_position};
+use tank_rpg::input_helper::{keyboard_events, mouse_position, PlayerInput};
 use tank_rpg::player::{init_player, player_move, player_turret_rotate};
 
 fn main() {
@@ -20,7 +19,7 @@ fn main() {
         .add_state(AppState::Loading)
         .insert_resource(GameAssets::default())
         .insert_resource(AssetsLoading::default())
-        .insert_resource(input_helper::Input::default())
+        .insert_resource(PlayerInput::default())
         .add_system(keyboard_events)
         .add_system(mouse_position)
         .add_system_set(

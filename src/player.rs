@@ -1,16 +1,13 @@
 use bevy::math::{Quat, Vec2, Vec3};
-use bevy::prelude::{
-    BuildChildren, Commands, Component, default, Entity, GlobalTransform, Query, Res,
-    Sprite, SpriteBundle, Time, Transform,
-};
+use bevy::prelude::{BuildChildren, Bundle, Commands, Component, default, Entity, GlobalTransform, Query, Res, Sprite, SpriteBundle, Time, Transform};
 use bevy::sprite::Anchor;
 use bevy_rapier2d::dynamics::Velocity;
 use bevy_rapier2d::prelude::{Collider, Damping, LockedAxes, RigidBody};
 use crate::assets::GameAssets;
 use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
-use crate::input_helper::Input;
+use crate::input_helper::PlayerInput;
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Player {
     pub accel: f32,
     pub max_speed: f32,
@@ -53,48 +50,15 @@ static TANK_COLLIDER_RADIUS: f32 = 60.;
 
 pub fn init_player(position: Vec2) -> impl Fn(Commands, Res<GameAssets>) {
     move |mut commands: Commands, game_assets: Res<GameAssets>| {
-        commands.spawn((
-            Player::default(),
-            SpriteBundle {
-                texture: game_assets.tank_gray.clone(),
-                transform: Transform {
-                    scale: Vec3::ONE * TANK_SCALE,
-                    translation: position.extend(PLAYER_LAYER),
-                    ..default()
-                },
-                ..default()
-            },
-            RigidBody::Dynamic,
-            Collider::ball(TANK_COLLIDER_RADIUS),
-            LockedAxes::ROTATION_LOCKED,
-            Velocity::default(),
-            Damping {
-                linear_damping: 5.,
-                ..default()
-            }
-        ))
+        commands.spawn(get_player_bundle(&game_assets, Some(position)))
             .with_children(|parent| {
-                parent.spawn((
-                    PlayerTurret::default(),
-                    SpriteBundle {
-                        texture: game_assets.tank_gray_turret.clone(),
-                        sprite: Sprite {
-                            anchor: Anchor::Custom(Vec2::from(TURRET_ANCHOR)),
-                            ..default()
-                        },
-                        transform: Transform {
-                            translation: Vec2::from(TURRET_POSITION).extend(TURRET_LAYER),
-                            ..default()
-                        },
-                        ..default()
-                    }
-                ));
+                parent.spawn(get_turret_bundle(&game_assets));
             });
     }
 }
 
 pub fn player_move(
-    input: Res<Input>,
+    input: Res<PlayerInput>,
     mut query: Query<(&mut Velocity, &Player)>,
     time: Res<Time>,
 ) {
@@ -110,7 +74,7 @@ pub fn player_move(
 }
 
 pub fn player_turret_rotate(
-    input: Res<Input>,
+    input: Res<PlayerInput>,
     mut query: Query<(&mut Transform, &GlobalTransform, &mut PlayerTurret)>,
 ) {
     for (mut trans, global_trans, mut turret) in query.iter_mut() {
@@ -120,4 +84,50 @@ pub fn player_turret_rotate(
 
         turret.direction = diff.normalize();
     }
+}
+
+pub fn get_player_bundle(game_assets: &GameAssets, position: Option<Vec2>) -> impl Bundle {
+    let position = match position {
+        Some(position) => position,
+        None => Vec2::default()
+    };
+
+    (
+        Player::default(),
+        SpriteBundle {
+            texture: game_assets.tank_gray.clone(),
+            transform: Transform {
+                scale: Vec3::ONE * TANK_SCALE,
+                translation: position.extend(PLAYER_LAYER),
+                ..default()
+            },
+            ..default()
+        },
+        RigidBody::Dynamic,
+        Collider::ball(TANK_COLLIDER_RADIUS),
+        LockedAxes::ROTATION_LOCKED,
+        Velocity::default(),
+        Damping {
+            linear_damping: 5.,
+            ..default()
+        }
+    )
+}
+
+pub fn get_turret_bundle(game_assets: &GameAssets) -> impl Bundle {
+    (
+        PlayerTurret::default(),
+        SpriteBundle {
+            texture: game_assets.tank_gray_turret.clone(),
+            sprite: Sprite {
+                anchor: Anchor::Custom(Vec2::from(TURRET_ANCHOR)),
+                ..default()
+            },
+            transform: Transform {
+                translation: Vec2::from(TURRET_POSITION).extend(TURRET_LAYER),
+                ..default()
+            },
+            ..default()
+        }
+    )
 }

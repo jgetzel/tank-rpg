@@ -3450,7 +3450,9 @@ dependencies = [
  "bevy-inspector-egui",
  "bevy_rapier2d",
  "bevy_renet",
+ "bincode",
  "phf",
+ "serde",
 ]
 
 [[package]]

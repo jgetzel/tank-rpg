@@ -2,18 +2,20 @@ use bevy::math::Vec2;
 use bevy::prelude::{Camera, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
+use bevy::reflect::erased_serde::__private::serde;
 use bevy::render::camera::RenderTarget;
 use crate::camera::MainCamera;
+use serde::Serialize;
 
-#[derive(Default, Resource)]
-pub struct Input {
+#[derive(Default, Serialize, Resource)]
+pub struct PlayerInput {
     pub movement: Vec2,
     pub mouse_position: Vec2,
 }
 
 pub fn keyboard_events(
     keys: Res<bevy::input::Input<KeyCode>>,
-    mut input: ResMut<Input>,
+    mut input: ResMut<PlayerInput>,
 ) {
     let key_to_input_map: HashMap<KeyCode, [f32; 2]> = HashMap::from([
         (KeyCode::W, [0., 1.]),
@@ -50,7 +52,7 @@ pub fn keyboard_events(
 pub fn mouse_position(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    mut input: ResMut<Input>
+    mut input: ResMut<PlayerInput>
 ) {
     let Ok((camera, camera_transform)) = q_camera.get_single()
         else { return; };

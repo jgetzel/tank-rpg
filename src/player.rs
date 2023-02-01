@@ -50,10 +50,7 @@ static TANK_COLLIDER_RADIUS: f32 = 60.;
 
 pub fn init_player(position: Vec2) -> impl Fn(Commands, Res<GameAssets>) {
     move |mut commands: Commands, game_assets: Res<GameAssets>| {
-        commands.spawn(get_player_bundle(&game_assets, Some(position)))
-            .with_children(|parent| {
-                parent.spawn(get_turret_bundle(&game_assets));
-            });
+        spawn_new_player(&mut commands, &game_assets, Some(position));
     }
 }
 
@@ -84,6 +81,13 @@ pub fn player_turret_rotate(
 
         turret.direction = diff.normalize();
     }
+}
+
+pub fn spawn_new_player(commands: &mut Commands, assets: &GameAssets, pos: Option<Vec2>) -> Entity {
+    commands.spawn(get_player_bundle(assets, pos))
+        .with_children(|p| {
+            p.spawn(get_turret_bundle(assets));
+        }).id()
 }
 
 pub fn get_player_bundle(game_assets: &GameAssets, position: Option<Vec2>) -> impl Bundle {

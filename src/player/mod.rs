@@ -1,10 +1,13 @@
+use bevy::log::{debug, info};
 use bevy::math::{Quat, Vec2, Vec3};
-use bevy::prelude::{BuildChildren, Bundle, Commands, Component, default, Entity, GlobalTransform,
-                    Query, Res, Time, Transform};
+use bevy::prelude::{BuildChildren, Commands, Component, default, Entity, EventReader, GlobalTransform, Query, Res, ResMut, SpriteBundle, Time, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
-use bevy_rapier2d::prelude::{Collider, Damping, LockedAxes, RigidBody};
-use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
+use crate::assets::GameAssets;
 use crate::input_helper::PlayerInput;
+use crate::networking::client::{PlayerJoinEvent, PlayerUpdateEvent};
+use crate::networking::Lobby;
+
+pub mod bundles;
 
 #[derive(Component)]
 pub struct You;
@@ -47,14 +50,15 @@ impl Default for PlayerTurret {
     }
 }
 
-static TANK_SCALE: f32 = 2. / 3.;
-static _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
-static TURRET_POSITION: [f32; 2] = [0., 30.];
-static TANK_COLLIDER_RADIUS: f32 = 60.;
-
-pub fn init_player(id: u64, position: Vec2) -> impl Fn(Commands) {
-    move |mut commands: Commands| {
-        spawn_new_player(&mut commands, id, Some(position));
+pub fn init_player(
+    mut join_ev: EventReader<PlayerJoinEvent>,
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>
+) {
+    for ev in join_ev.iter() {
+        info!("Player {} Connected", ev.player_id);
+        let player_entity = spawn_new_player(&mut commands, ev.player_id, None);
+        lobby.players.insert(ev.player_id,player_entity);
     }
 }
 
@@ -86,44 +90,42 @@ pub fn player_turret_rotate(
     }
 }
 
-pub fn spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> Entity {
-    commands.spawn(get_player_bundle(id, pos))
+pub fn  spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> Entity {
+    commands.spawn(bundles::get_player_bundle(id, pos))
         .with_children(|p| {
-            p.spawn(get_turret_bundle());
+            p.spawn(bundles::get_turret_bundle());
         }).id()
 }
 
-pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
-    let position = match position {
-        Some(position) => position,
-        None => Vec2::default()
-    };
-
-    (
-        Player::new(id),
-        PlayerInput::default(),
-        Transform {
-            scale: Vec3::ONE * TANK_SCALE,
-            translation: position.extend(PLAYER_LAYER),
-            ..default()
-        },
-        RigidBody::Dynamic,
-        Collider::ball(TANK_COLLIDER_RADIUS),
-        LockedAxes::ROTATION_LOCKED,
-        Velocity::default(),
-        Damping {
-            linear_damping: 5.,
-            ..default()
+pub fn player_sprite_spawner(
+    mut join_event: EventReader<PlayerJoinEvent>,
+    mut commands: Commands,
+    lobby: ResMut<Lobby>,
+    assets: Res<GameAssets>,
+    query: Query<&mut Transform, With<Player>>
+) {
+    for player in join_event.iter().map(|e| e.player_id) {
+        if let Some(&player_entity) = lobby.players.get(&player) {
+            commands.entity(player_entity).insert(SpriteBundle {
+                texture: assets.tank_gray.clone(),
+                transform: *query.get(player_entity).unwrap_or(&Transform::default()),
+                ..default()
+            });
+            debug!("Sprite added for Player {player}");
         }
-    )
+    }
 }
 
-pub fn get_turret_bundle() -> impl Bundle {
-    (
-        PlayerTurret::default(),
-        Transform {
-            translation: Vec2::from(TURRET_POSITION).extend(TURRET_LAYER),
-            ..default()
+pub fn player_pos_updater(
+    mut update_event: EventReader<PlayerUpdateEvent>,
+    mut query: Query<&mut Transform, With<Player>>,
+    lobby: Res<Lobby>,
+) {
+    for ev in update_event.iter() {
+        if let Some(&entity) = lobby.players.get(&ev.player_id) {
+            if let Ok(mut trans) = query.get_mut(entity) {
+                trans.translation = ev.translation;
+            }
         }
-    )
+    }
 }

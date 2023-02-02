@@ -1,9 +1,12 @@
 use std::iter::zip;
-use bevy::prelude::{Camera, Camera2dBundle, Commands, Query, Res, Transform, With, Without, Component};
+use bevy::prelude::{Camera, Camera2dBundle, Commands, Component, debug, EventReader, Query, Res, Transform, With, Without};
 use bevy::time::Time;
 use bevy::utils::default;
+use bevy_renet::renet::RenetClient;
 use crate::environment::CAMERA_LAYER;
-use crate::player::{Player, You};
+use crate::networking::client::PlayerJoinEvent;
+use crate::networking::Lobby;
+use crate::player::You;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -33,5 +36,21 @@ pub fn camera_move(
             player_trans.translation.truncate().extend(CAMERA_LAYER),
             CAMERA_SMOOTHING * time.delta_seconds(),
         );
+    }
+}
+
+pub fn you_tag_adder(
+    mut join_event: EventReader<PlayerJoinEvent>,
+    mut commands: Commands,
+    client: Res<RenetClient>,
+    lobby: Res<Lobby>
+) {
+    for ev in join_event.iter() {
+        if ev.player_id == client.client_id() {
+            if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
+                commands.entity(player_entity).insert(You);
+                debug!("'You' tag added for Player {}", ev.player_id);
+            }
+        }
     }
 }

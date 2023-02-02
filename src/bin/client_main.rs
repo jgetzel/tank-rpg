@@ -1,31 +1,28 @@
 use bevy::app::App;
 use bevy::DefaultPlugins;
-use bevy::prelude::{Commands, EventReader, EventWriter, PluginGroup, Query, Res, ResMut, SystemSet, Transform, WindowDescriptor, With};
-use bevy::sprite::SpriteBundle;
+use bevy::log::LogPlugin;
+use bevy::prelude::*;
 use bevy::utils::default;
 use bevy::window::WindowPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_rapier2d::parry::transformation::utils::transform;
 use bevy_renet::{RenetClientPlugin, run_if_client_connected};
-use bevy_renet::renet::RenetClient;
 use tank_rpg::assets::{AppState, AssetsLoading, check_assets_loaded, GameAssets, load_assets};
-use tank_rpg::camera::{camera_move, init_camera};
+use tank_rpg::camera::{camera_move, init_camera, you_tag_adder};
 use tank_rpg::environment::init_background;
 use tank_rpg::input_helper::{keyboard_events, mouse_position, PlayerInput};
 use tank_rpg::networking::{client, Lobby};
 use tank_rpg::networking::client::{PlayerJoinEvent, PlayerLeaveEvent, PlayerUpdateEvent};
-use tank_rpg::player::{Player, You};
+use tank_rpg::player::{init_player, player_pos_updater, player_sprite_spawner};
+use crate::ClientEventSysLabel::{ClientReceive, ClientSend};
+use crate::PlayerJoinSysLabel::{ConfigPlayer, SpawnPlayer};
 
 fn main() {
     let mut app = App::new();
 
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        window: WindowDescriptor {
-            title: "Client Window".into(),
-            ..default()
-        },
-        ..default()
-    }))
+    app.add_plugins(
+        DefaultPlugins
+            .set(get_window_plugin())
+            .set(get_log_plugin()))
         .add_plugin(RenetClientPlugin::default())
         .add_state(AppState::Loading)
         .insert_resource(client::new_client())
@@ -55,65 +52,63 @@ fn main() {
         .add_system_set(
             SystemSet::new()
                 .with_run_criteria(run_if_client_connected)
-                .with_system(client::client_send_input)
-                .with_system(client::client_recv)
+                .with_system(client::client_recv.label(ClientReceive))
+                .with_system(client::client_send_input.
+                    label(ClientSend).after(ClientReceive))
         );
 
     app.add_event::<PlayerJoinEvent>()
         .add_event::<PlayerLeaveEvent>()
         .add_event::<PlayerUpdateEvent>()
-        .add_system(you_tag_adder)
-        .add_system(player_sprite_spawner)
-        .add_system(player_pos_updater);
+        .add_system(init_player.label(SpawnPlayer).after(ClientReceive))
+        .add_system_set(
+            SystemSet::new()
+                .label(ConfigPlayer)
+                .after(SpawnPlayer)
+                .with_system(you_tag_adder)
+                .with_system(player_sprite_spawner)
+                .with_system(player_pos_updater)
+        );
 
     app.add_plugin(WorldInspectorPlugin);
 
     app.run();
 }
 
-fn player_sprite_spawner(
-    mut join_event: EventReader<PlayerJoinEvent>,
-    mut commands: Commands,
-    lobby: ResMut<Lobby>,
-    assets: Res<GameAssets>,
-    query: Query<&mut Transform, With<Player>>
-) {
-    for player in join_event.iter().map(|e| e.player_id) {
-        if let Some(&player_entity) = lobby.players.get(&player) {
-            commands.entity(player_entity).insert(SpriteBundle {
-                texture: assets.tank_gray.clone(),
-                transform: *query.get(player_entity).unwrap_or(&Transform::default()),
-                ..default()
-            });
-        }
-    }
+#[derive(SystemLabel)]
+enum PlayerJoinSysLabel {
+    SpawnPlayer,
+    ConfigPlayer,
 }
 
-fn you_tag_adder(
-    mut join_event: EventReader<PlayerJoinEvent>,
-    mut commands: Commands,
-    client: Res<RenetClient>,
-    lobby: Res<Lobby>
-) {
-    for ev in join_event.iter() {
-        if ev.player_id == client.client_id() {
-            if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
-                commands.entity(player_entity).insert(You);
-            }
-        }
-    }
+#[derive(SystemLabel)]
+enum ClientEventSysLabel {
+    ClientReceive,
+    ClientSend,
 }
 
-fn player_pos_updater(
-    mut update_event: EventReader<PlayerUpdateEvent>,
-    mut query: Query<&mut Transform, With<Player>>,
-    lobby: Res<Lobby>,
-) {
-    for ev in update_event.iter() {
-        if let Some(&entity) = lobby.players.get(&ev.player_id) {
-            if let Ok(mut trans) = query.get_mut(entity) {
-                trans.translation = ev.translation;
-            }
-        }
+fn get_log_plugin() -> LogPlugin {
+    // this code is compiled only if debug assertions are enabled (debug mode)
+    #[cfg(debug_assertions)]
+    return LogPlugin {
+        level: bevy::log::Level::DEBUG,
+        filter: "debug,wgpu_core=warn,wgpu_hal=warn,mygame=debug".into(),
+    };
+
+    // this code is compiled only if debug assertions are disabled (release mode)
+    #[cfg(not(debug_assertions))]
+    return LogPlugin {
+        level: bevy::log::Level::INFO,
+        filter: "info,wgpu_core=warn,wgpu_hal=warn".into(),
+    };
+}
+
+fn get_window_plugin() -> WindowPlugin {
+    WindowPlugin {
+        window: WindowDescriptor {
+            title: "Client Window".into(),
+            ..default()
+        },
+        ..default()
     }
 }

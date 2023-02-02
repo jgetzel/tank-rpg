@@ -10,14 +10,14 @@ pub const BULLET_LAYER: f32 = 1.;
 pub const TURRET_LAYER: f32 = 2.;
 pub const CAMERA_LAYER: f32 = 100.;
 
+pub fn remove_gravity(mut config: ResMut<RapierConfiguration>) {
+    config.gravity = Vec2::new(0., 0.);
+}
+
 pub fn init_background(mut commands: Commands, game_assets: Res<GameAssets>) {
     commands.spawn(SpriteBundle {
         texture: game_assets.background.clone(),
         transform: Transform::from_xyz(0., 0., BACKGROUND_LAYER),
         ..default()
     });
-}
-
-pub fn remove_gravity(mut config: ResMut<RapierConfiguration>) {
-    config.gravity = Vec2::new(0., 0.);
 }

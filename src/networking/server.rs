@@ -3,6 +3,7 @@ use std::io::ErrorKind::ConnectionReset;
 use bevy_renet::renet::{DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use std::net::UdpSocket;
 use std::time::SystemTime;
+use bevy::log::info;
 use bevy::prelude::{Commands, DespawnRecursiveExt, Entity, EventReader, Query, ResMut, Transform};
 use bevy::utils::HashMap;
 use crate::input_helper::PlayerInput;
@@ -82,7 +83,7 @@ fn on_client_connect(
     server: &mut RenetServer,
     lobby: &mut Lobby,
 ) {
-    println!("Player {id} Connected.");
+    info!("Player {id} Connected.");
     let player_entity: Entity = spawn_new_player(commands, *id, None);
 
     for &player_id in lobby.players.keys() {
@@ -106,7 +107,7 @@ fn on_client_disconnect(
     server: &mut RenetServer,
     lobby: &mut Lobby,
 ) {
-    println!("Player {id} Disconnected");
+    info!("Player {id} Disconnected");
     if let Some(player_entity) = lobby.players.remove(id) {
         commands.entity(player_entity).despawn_recursive();
     }

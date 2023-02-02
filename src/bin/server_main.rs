@@ -1,8 +1,5 @@
 use bevy::DefaultPlugins;
-use bevy::pbr::StandardMaterial;
-use bevy::prelude::{App, default, PluginGroup, WindowDescriptor, WindowPlugin, World};
-use bevy_inspector_egui::{bevy_egui, egui};
-use bevy_inspector_egui::bevy_egui::EguiPlugin;
+use bevy::prelude::{App, default, PluginGroup, WindowDescriptor, WindowPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
 use bevy_rapier2d::prelude::Velocity;

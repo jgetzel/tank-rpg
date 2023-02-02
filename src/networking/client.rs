@@ -1,14 +1,15 @@
-use bevy::prelude::{Commands, EventWriter, Res, ResMut, Transform, Vec3};
+use bevy::prelude::{Commands, EventWriter, Res, ResMut, Vec3};
 use bevy_renet::renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig};
 use std::net::UdpSocket;
 use std::time::SystemTime;
 use bevy::math::Vec2;
 use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
-use bevy::utils::{default, HashMap};
+use bevy::log::info;
+use bevy::utils::HashMap;
 use crate::input_helper::PlayerInput;
 use crate::networking::{Lobby, PROTOCOL_ID, ServerMessages};
 use crate::networking::server::SERVER_ADDRESS;
-use crate::player::{get_player_bundle, get_turret_bundle, Player};
+use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 
 pub struct PlayerJoinEvent {
     pub player_id: u64,
@@ -59,7 +60,6 @@ pub fn client_recv(
         let server_message = bincode::deserialize(&message).unwrap();
         match server_message {
             ServerMessages::PlayerConnected { id } => {
-                on_new_player(id, &mut commands, &mut lobby);
                 join_event.send(PlayerJoinEvent { player_id: id });
             }
             ServerMessages::PlayerDisconnected { id } => {
@@ -79,7 +79,7 @@ pub fn client_recv(
 }
 
 fn on_new_player(id: u64, commands: &mut Commands, lobby: &mut Lobby) {
-    println!("Player {id} Connected");
+    info!("Player {id} Connected");
     let player_entity = commands.spawn(
         get_player_bundle(id, Some(Vec2::default()))
     ).with_children(|parent| {
@@ -90,7 +90,7 @@ fn on_new_player(id: u64, commands: &mut Commands, lobby: &mut Lobby) {
 }
 
 fn on_player_leave(id: u64, commands: &mut Commands, lobby: &mut Lobby) {
-    println!("Player {id} Disconnected");
+    info!("Player {id} Disconnected");
     if let Some(player_entity) = lobby.players.remove(&id) {
         commands.entity(player_entity).despawn_recursive();
     }

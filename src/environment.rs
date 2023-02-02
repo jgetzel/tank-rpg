@@ -1,12 +1,14 @@
-use bevy::prelude::{ Commands, default, Res, Transform};
-use bevy::sprite::{ SpriteBundle };
+use bevy::prelude::{Commands, default, Res, ResMut, Transform};
+use bevy::sprite::SpriteBundle;
+use bevy_rapier2d::plugin::RapierConfiguration;
+use bevy::math::Vec2;
 use crate::assets::GameAssets;
 
-pub static BACKGROUND_LAYER: f32 = -10.;
-pub static PLAYER_LAYER: f32 = 0.;
-pub static BULLET_LAYER: f32 = 1.;
-pub static TURRET_LAYER: f32 = 2.;
-pub static CAMERA_LAYER: f32 = 100.;
+pub const BACKGROUND_LAYER: f32 = -10.;
+pub const PLAYER_LAYER: f32 = 0.;
+pub const BULLET_LAYER: f32 = 1.;
+pub const TURRET_LAYER: f32 = 2.;
+pub const CAMERA_LAYER: f32 = 100.;
 
 pub fn init_background(mut commands: Commands, game_assets: Res<GameAssets>) {
     commands.spawn(SpriteBundle {
@@ -14,4 +16,8 @@ pub fn init_background(mut commands: Commands, game_assets: Res<GameAssets>) {
         transform: Transform::from_xyz(0., 0., BACKGROUND_LAYER),
         ..default()
     });
+}
+
+pub fn remove_gravity(mut config: ResMut<RapierConfiguration>) {
+    config.gravity = Vec2::new(0., 0.);
 }

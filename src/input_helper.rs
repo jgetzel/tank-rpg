@@ -1,13 +1,13 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Camera, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
+use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
-use bevy::reflect::erased_serde::__private::serde;
+use bevy::reflect::Reflect;
 use bevy::render::camera::RenderTarget;
 use crate::camera::MainCamera;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, Serialize, Resource)]
+#[derive(Default, Serialize, Deserialize, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug)]
 pub struct PlayerInput {
     pub movement: Vec2,
     pub mouse_position: Vec2,
@@ -52,7 +52,7 @@ pub fn keyboard_events(
 pub fn mouse_position(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    mut input: ResMut<PlayerInput>
+    mut input: ResMut<PlayerInput>,
 ) {
     let Ok((camera, camera_transform)) = q_camera.get_single()
         else { return; };
@@ -63,6 +63,8 @@ pub fn mouse_position(
 
     let Some(screen_pos) = window.cursor_position() else { return; };
     let window_size = Vec2::new(window.width(), window.height());
+
+    if window_size.x == 0. || window_size.y == 0. { return; }
 
     // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
     let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;

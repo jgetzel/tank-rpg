@@ -3,7 +3,7 @@ use bevy::prelude::{Camera, Camera2dBundle, Commands, Query, Res, Transform, Wit
 use bevy::time::Time;
 use bevy::utils::default;
 use crate::environment::CAMERA_LAYER;
-use crate::player::Player;
+use crate::player::{Player, You};
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -21,8 +21,8 @@ pub fn init_camera(mut commands: Commands) {
 }
 
 pub fn camera_move(
-    player_query: Query<&Transform, With<Player>>,
-    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    player_query: Query<&Transform, With<You>>,
+    mut camera_query: Query<&mut Transform, (With<Camera>, Without<You>)>,
     time: Res<Time>,
 ) {
     for (player_trans, mut cam_trans) in zip(

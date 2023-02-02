@@ -1,11 +1,10 @@
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_rapier2d::render::RapierDebugRenderPlugin;
 use bevy::prelude::*;
-use bevy_rapier2d::plugin::{RapierConfiguration, RapierPhysicsPlugin};
+use bevy_rapier2d::plugin::RapierPhysicsPlugin;
 use bevy_rapier2d::prelude::NoUserData;
 use tank_rpg::assets::{AppState, AssetsLoading, check_assets_loaded, GameAssets, load_assets};
 use tank_rpg::bullet::fire_bullet;
 use tank_rpg::camera::{camera_move, init_camera};
+use tank_rpg::environment;
 use tank_rpg::environment::init_background;
 use tank_rpg::input_helper::{keyboard_events, mouse_position, PlayerInput};
 use tank_rpg::player::{init_player, player_move, player_turret_rotate};
@@ -25,7 +24,7 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(AppState::Loading)
                 .with_system(load_assets)
-                .with_system(remove_gravity)
+                .with_system(environment::remove_gravity)
         )
         .add_system_set(
             SystemSet::on_update(AppState::Loading)
@@ -33,7 +32,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(AppState::InGame)
-                .with_system(init_player(Vec2::default()))
+                .with_system(init_player(0,Vec2::default()))
                 .with_system(init_background)
                 .with_system(init_camera)
         )
@@ -45,8 +44,4 @@ fn main() {
                 .with_system(fire_bullet)
         )
         .run();
-}
-
-fn remove_gravity(mut config: ResMut<RapierConfiguration>) {
-    config.gravity = Vec2::new(0., 0.);
 }

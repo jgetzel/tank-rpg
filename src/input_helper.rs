@@ -1,16 +1,17 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, Query, Res, ResMut, Windows, With};
+use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, Query, Res, ResMut, Transform, Windows, With};
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
 use bevy::reflect::Reflect;
 use bevy::render::camera::RenderTarget;
 use crate::camera::MainCamera;
 use serde::{Deserialize, Serialize};
+use crate::player::You;
 
 #[derive(Default, Serialize, Deserialize, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug)]
 pub struct PlayerInput {
     pub movement: Vec2,
-    pub mouse_position: Vec2,
+    pub turret_dir: Vec2,
 }
 
 pub fn keyboard_events(
@@ -52,14 +53,20 @@ pub fn keyboard_events(
 pub fn mouse_position(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    q_you: Query<&GlobalTransform, With<You>>,
     mut input: ResMut<PlayerInput>,
 ) {
     let Ok((camera, camera_transform)) = q_camera.get_single()
         else { return; };
 
+    let Ok(you_trans) = q_you.get_single()
+        else { return; };
+
     let Some(window) = (if let RenderTarget::Window(id) = camera.target
     { windows.get(id) } else { windows.get_primary() })
         else { return; };
+
+
 
     let Some(screen_pos) = window.cursor_position() else { return; };
     let window_size = Vec2::new(window.width(), window.height());
@@ -75,5 +82,5 @@ pub fn mouse_position(
     // use it to convert ndc to world-space coordinates
     let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
 
-    input.mouse_position = world_pos.truncate();
+    input.turret_dir = (world_pos.truncate() - you_trans.translation().truncate()).normalize();
 }

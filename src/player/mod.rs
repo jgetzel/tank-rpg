@@ -79,14 +79,13 @@ pub fn player_move(
 
 pub fn player_turret_rotate(
     input: Res<PlayerInput>,
-    mut query: Query<(&mut Transform, &GlobalTransform, &mut PlayerTurret)>,
+    mut query: Query<(&mut Transform, &mut PlayerTurret)>,
 ) {
-    for (mut trans, global_trans, mut turret) in query.iter_mut() {
-        let diff = input.mouse_position - global_trans.translation().truncate();
-        let angle = diff.y.atan2(diff.x);
-        trans.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
+    for (mut trans, mut turret) in query.iter_mut() {
+        turret.direction = input.turret_dir;
 
-        turret.direction = diff.normalize();
+        let angle = input.turret_dir.y.atan2(input.turret_dir.x);
+        trans.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
     }
 }
 

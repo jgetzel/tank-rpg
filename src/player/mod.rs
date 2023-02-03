@@ -53,12 +53,12 @@ impl Default for PlayerTurret {
 pub fn init_player(
     mut join_ev: EventReader<PlayerJoinEvent>,
     mut commands: Commands,
-    mut lobby: ResMut<Lobby>
+    mut lobby: ResMut<Lobby>,
 ) {
     for ev in join_ev.iter() {
         info!("Player {} Connected", ev.player_id);
         let player_entity = spawn_new_player(&mut commands, ev.player_id, None);
-        lobby.players.insert(ev.player_id,player_entity);
+        lobby.players.insert(ev.player_id, player_entity);
     }
 }
 
@@ -90,7 +90,7 @@ pub fn player_turret_rotate(
     }
 }
 
-pub fn  spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> Entity {
+pub fn spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> Entity {
     commands.spawn(bundles::get_player_bundle(id, pos))
         .with_children(|p| {
             p.spawn(bundles::get_turret_bundle());
@@ -102,14 +102,15 @@ pub fn player_sprite_spawner(
     mut commands: Commands,
     lobby: ResMut<Lobby>,
     assets: Res<GameAssets>,
-    query: Query<&mut Transform, With<Player>>
+    query: Query<&mut Transform, With<Player>>,
 ) {
     for player in join_event.iter().map(|e| e.player_id) {
         if let Some(&player_entity) = lobby.players.get(&player) {
-            commands.entity(player_entity).insert(SpriteBundle {
-                texture: assets.tank_gray.clone(),
-                transform: *query.get(player_entity).unwrap_or(&Transform::default()),
-                ..default()
+            commands.entity(player_entity).with_children(|p| {
+                p.spawn(SpriteBundle {
+                    texture: assets.tank_gray.clone(),
+                    ..default()
+                });
             });
             debug!("Sprite added for Player {player}");
         }

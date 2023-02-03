@@ -1,5 +1,5 @@
 use bevy::math::{Vec2, Vec3};
-use bevy::prelude::{Bundle, default, Transform};
+use bevy::prelude::{Bundle, default, SpatialBundle, Transform};
 use bevy_rapier2d::dynamics::{Damping, LockedAxes, RigidBody, Velocity};
 use bevy_rapier2d::geometry::Collider;
 use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
@@ -20,9 +20,12 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
     (
         Player::new(id),
         PlayerInput::default(),
-        Transform {
-            scale: Vec3::ONE * TANK_SCALE,
-            translation: position.extend(PLAYER_LAYER),
+        SpatialBundle {
+            transform: Transform {
+                scale: Vec3::ONE * TANK_SCALE,
+                translation: position.extend(PLAYER_LAYER),
+                ..default()
+            },
             ..default()
         },
         RigidBody::Dynamic,

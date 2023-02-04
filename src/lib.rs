@@ -1,4 +1,5 @@
 pub mod assets;
+pub mod object;
 pub mod camera;
 pub mod environment;
 pub mod input_helper;

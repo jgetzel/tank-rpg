@@ -9,10 +9,11 @@ use bevy_renet::{RenetClientPlugin, run_if_client_connected};
 use tank_rpg::assets::{AppState, AssetsLoading, check_assets_loaded, GameAssets, load_assets};
 use tank_rpg::camera::{camera_move, init_camera, you_tag_adder};
 use tank_rpg::environment::init_background;
-use tank_rpg::input_helper::{keyboard_events, mouse_position, PlayerInput};
+use tank_rpg::input_helper::{keyboard_events, mouse_click, mouse_position, PlayerInput};
 use tank_rpg::networking::{client, Lobby};
-use tank_rpg::networking::client::{PlayerJoinEvent, PlayerLeaveEvent, PlayerUpdateEvent};
-use tank_rpg::player::{init_player, player_pos_updater, player_sprite_spawner};
+use tank_rpg::networking::client::{PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent};
+use tank_rpg::object::{phys_obj_updater, SyncedObjects};
+use tank_rpg::player::init_player;
 use crate::ClientEventSysLabel::{ClientReceive, ClientSend};
 use crate::PlayerJoinSysLabel::{ConfigPlayer, SpawnPlayer};
 
@@ -27,6 +28,7 @@ fn main() {
         .add_state(AppState::Loading)
         .insert_resource(client::new_client())
         .insert_resource(Lobby::default())
+        .insert_resource(SyncedObjects::default())
         .insert_resource(GameAssets::default())
         .insert_resource(AssetsLoading::default())
         .insert_resource(PlayerInput::default())
@@ -47,28 +49,33 @@ fn main() {
             SystemSet::on_update(AppState::InGame)
                 .with_system(camera_move)
         )
-        .add_system(keyboard_events)
-        .add_system(mouse_position)
         .add_system_set(
             SystemSet::new()
                 .with_run_criteria(run_if_client_connected)
                 .with_system(client::client_recv.label(ClientReceive))
-                .with_system(client::client_send_input.
-                    label(ClientSend).after(ClientReceive))
+                .with_system(client::client_send_input.label(ClientSend)
+                    .after(ClientReceive))
         );
 
     app.add_event::<PlayerJoinEvent>()
         .add_event::<PlayerLeaveEvent>()
-        .add_event::<PlayerUpdateEvent>()
+        .add_event::<PhysObjUpdateEvent>()
         .add_system(init_player.label(SpawnPlayer).after(ClientReceive))
         .add_system_set(
             SystemSet::new()
                 .label(ConfigPlayer)
                 .after(SpawnPlayer)
                 .with_system(you_tag_adder)
-                .with_system(player_sprite_spawner)
-                .with_system(player_pos_updater)
+                .with_system(phys_obj_updater)
         );
+
+    app.add_system_set(
+        SystemSet::new()
+            .before(ClientSend)
+            .with_system(keyboard_events)
+            .with_system(mouse_position)
+            .with_system(mouse_click)
+    );
 
     app.add_plugin(WorldInspectorPlugin);
 

@@ -1,10 +1,9 @@
-use bevy::log::{debug, info};
+use bevy::log::info;
 use bevy::math::{Quat, Vec2, Vec3};
-use bevy::prelude::{BuildChildren, Commands, Component, default, Entity, EventReader, GlobalTransform, Query, Res, ResMut, SpriteBundle, Time, Transform, With};
+use bevy::prelude::{BuildChildren, Commands, Component, Entity, EventReader, Query, Res, ResMut, Time, Transform};
 use bevy_rapier2d::dynamics::Velocity;
-use crate::assets::GameAssets;
 use crate::input_helper::PlayerInput;
-use crate::networking::client::{PlayerJoinEvent, PlayerUpdateEvent};
+use crate::networking::client::PlayerJoinEvent;
 use crate::networking::Lobby;
 
 pub mod bundles;
@@ -94,38 +93,4 @@ pub fn spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> 
         .with_children(|p| {
             p.spawn(bundles::get_turret_bundle());
         }).id()
-}
-
-pub fn player_sprite_spawner(
-    mut join_event: EventReader<PlayerJoinEvent>,
-    mut commands: Commands,
-    lobby: ResMut<Lobby>,
-    assets: Res<GameAssets>,
-    query: Query<&mut Transform, With<Player>>,
-) {
-    for player in join_event.iter().map(|e| e.player_id) {
-        if let Some(&player_entity) = lobby.players.get(&player) {
-            commands.entity(player_entity).with_children(|p| {
-                p.spawn(SpriteBundle {
-                    texture: assets.tank_gray.clone(),
-                    ..default()
-                });
-            });
-            debug!("Sprite added for Player {player}");
-        }
-    }
-}
-
-pub fn player_pos_updater(
-    mut update_event: EventReader<PlayerUpdateEvent>,
-    mut query: Query<&mut Transform, With<Player>>,
-    lobby: Res<Lobby>,
-) {
-    for ev in update_event.iter() {
-        if let Some(&entity) = lobby.players.get(&ev.player_id) {
-            if let Ok(mut trans) = query.get_mut(entity) {
-                trans.translation = ev.translation;
-            }
-        }
-    }
 }

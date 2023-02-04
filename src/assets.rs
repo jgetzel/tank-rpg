@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use bevy::asset::{AssetServer, Handle, HandleUntyped, LoadState};
-use bevy::prelude::{Commands, Image, Res, ResMut, Resource, State};
+use bevy::prelude::{Commands, Component, Image, Res, ResMut, Resource, State};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -7,12 +9,17 @@ pub enum AppState {
     InGame,
 }
 
+#[derive(Eq, Hash, PartialEq, Debug, Serialize, Deserialize, Component, Clone, Copy)]
+pub enum SpriteEnum {
+    TankGray,
+    TankGrayTurret,
+    Bullet,
+    Background,
+}
+
 #[derive(Default, Resource)]
 pub struct GameAssets {
-    pub tank_gray: Handle<Image>,
-    pub tank_gray_turret: Handle<Image>,
-    pub bullet: Handle<Image>,
-    pub background: Handle<Image>,
+    pub map: HashMap<SpriteEnum, Handle<Image>>
 }
 
 #[derive(Default, Resource)]
@@ -23,15 +30,15 @@ pub fn load_assets(
     asset_server: Res<AssetServer>,
     mut loading: ResMut<AssetsLoading>,
 ) {
-    game_assets.tank_gray = asset_server.load("sprites/tank_gray.png");
-    game_assets.tank_gray_turret = asset_server.load("sprites/tank_gray_turret.png");
-    game_assets.bullet = asset_server.load("sprites/bullet.png");
-    game_assets.background = asset_server.load("sprites/background.png");
 
-    loading.0.push(game_assets.tank_gray.clone_untyped());
-    loading.0.push(game_assets.tank_gray_turret.clone_untyped());
-    loading.0.push(game_assets.bullet.clone_untyped());
-    loading.0.push(game_assets.background.clone_untyped());
+    game_assets.map.insert(SpriteEnum::TankGray, asset_server.load("sprites/tank_gray.png"));
+    game_assets.map.insert(SpriteEnum::TankGray, asset_server.load("sprites/tank_gray_turret.png"));
+    game_assets.map.insert(SpriteEnum::Bullet, asset_server.load("sprites/bullet.png"));
+    game_assets.map.insert(SpriteEnum::Background, asset_server.load("sprites/background.png"));
+
+    for (_, handle) in game_assets.map.iter() {
+        loading.0.push(handle.clone_untyped());
+    }
 }
 
 pub fn check_assets_loaded(

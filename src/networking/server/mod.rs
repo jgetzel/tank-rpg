@@ -1,14 +1,16 @@
+pub mod broadcast;
+
 use std::default::Default;
 use std::io::ErrorKind::ConnectionReset;
 use bevy_renet::renet::{DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use std::net::UdpSocket;
 use std::time::SystemTime;
 use bevy::log::info;
-use bevy::prelude::{Commands, DespawnRecursiveExt, Entity, EventReader, Query, ResMut, Transform};
-use bevy::utils::HashMap;
+use bevy::prelude::{Commands, DespawnRecursiveExt, Entity, EventReader, ResMut};
 use crate::input_helper::PlayerInput;
-use crate::networking::{Lobby, PROTOCOL_ID, ServerMessages};
-use crate::player::{Player, spawn_new_player};
+use crate::networking::{Lobby, PROTOCOL_ID};
+use crate::networking::messages::ReliableMessages;
+use crate::player::spawn_new_player;
 
 pub const SERVER_ADDRESS: &str = "127.0.0.1:5000";
 
@@ -53,18 +55,6 @@ pub fn server_recv(
     }
 }
 
-pub fn broadcast_state(
-    mut server: ResMut<RenetServer>,
-    query: Query<(&Player, &Transform)>,
-) {
-    let mut players: HashMap<u64, [f32; 3]> = HashMap::new();
-    for (player, transform) in query.iter() {
-        players.insert(player.id, transform.translation.into());
-    }
-    let sync_msg = bincode::serialize(&players).unwrap();
-    server.broadcast_message(DefaultChannel::Unreliable, sync_msg);
-}
-
 pub fn force_disconnect_handler(mut renet_err: EventReader<RenetError>) {
     for e in renet_err.iter() {
         if let RenetError::IO(e) = e {
@@ -88,7 +78,7 @@ fn on_client_connect(
 
     for &player_id in lobby.players.keys() {
         let message = bincode::serialize(
-            &ServerMessages::PlayerConnected { id: player_id }
+            &ReliableMessages::PlayerConnected { id: player_id }
         ).unwrap();
         server.send_message(*id, DefaultChannel::Reliable, message);
     }
@@ -96,7 +86,7 @@ fn on_client_connect(
     lobby.players.insert(*id, player_entity);
 
     let message = bincode::serialize(
-        &ServerMessages::PlayerConnected { id: *id }
+        &ReliableMessages::PlayerConnected { id: *id }
     ).unwrap();
     server.broadcast_message(DefaultChannel::Reliable, message);
 }
@@ -113,7 +103,7 @@ fn on_client_disconnect(
     }
 
     let message = bincode::serialize(
-        &ServerMessages::PlayerDisconnected { id: *id }
+        &ReliableMessages::PlayerDisconnected { id: *id }
     ).unwrap();
     server.broadcast_message(DefaultChannel::Reliable, message);
 }

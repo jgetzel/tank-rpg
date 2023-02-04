@@ -1,7 +1,8 @@
 use bevy::math::Vec2;
-use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, Query, Res, ResMut, Transform, Windows, With};
+use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, MouseButton, Query, Res, ResMut, Windows, With};
 use bevy::utils::HashMap;
 use bevy::ecs::system::Resource;
+use bevy::input::Input;
 use bevy::reflect::Reflect;
 use bevy::render::camera::RenderTarget;
 use crate::camera::MainCamera;
@@ -12,10 +13,11 @@ use crate::player::You;
 pub struct PlayerInput {
     pub movement: Vec2,
     pub turret_dir: Vec2,
+    pub fire_bullet: bool
 }
 
 pub fn keyboard_events(
-    keys: Res<bevy::input::Input<KeyCode>>,
+    keys: Res<Input<KeyCode>>,
     mut input: ResMut<PlayerInput>,
 ) {
     let key_to_input_map: HashMap<KeyCode, [f32; 2]> = HashMap::from([
@@ -83,4 +85,11 @@ pub fn mouse_position(
     let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
 
     input.turret_dir = (world_pos.truncate() - you_trans.translation().truncate()).normalize();
+}
+
+pub fn mouse_click(
+    mut input: ResMut<PlayerInput>,
+    button: ResMut<Input<MouseButton>>,
+) {
+    input.fire_bullet = button.just_pressed(MouseButton::Left);
 }

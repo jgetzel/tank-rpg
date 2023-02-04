@@ -1,15 +1,14 @@
-use bevy::prelude::{Commands, EventWriter, Res, ResMut, Vec3};
+use bevy::prelude::{Commands, EventWriter, Res, ResMut};
 use bevy_renet::renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig};
 use std::net::UdpSocket;
 use std::time::SystemTime;
-use bevy::math::Vec2;
-use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
+use bevy::hierarchy::{DespawnRecursiveExt};
 use bevy::log::info;
-use bevy::utils::HashMap;
 use crate::input_helper::PlayerInput;
-use crate::networking::{Lobby, PROTOCOL_ID, ServerMessages};
+use crate::networking::{Lobby, PROTOCOL_ID};
+use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMessages};
 use crate::networking::server::SERVER_ADDRESS;
-use crate::player::bundles::{get_player_bundle, get_turret_bundle};
+use crate::object::{ObjectId};
 
 pub struct PlayerJoinEvent {
     pub player_id: u64,
@@ -19,11 +18,10 @@ pub struct PlayerLeaveEvent {
     pub player_id: u64,
 }
 
-pub struct PlayerUpdateEvent {
-    pub player_id: u64,
-    pub translation: Vec3,
+pub struct PhysObjUpdateEvent {
+    pub id: ObjectId,
+    pub data: PhysicsObjData
 }
-
 
 pub fn new_client() -> RenetClient {
     let server_addr = SERVER_ADDRESS.parse().unwrap();
@@ -54,15 +52,15 @@ pub fn client_recv(
     mut lobby: ResMut<Lobby>,
     mut join_event: EventWriter<PlayerJoinEvent>,
     mut leave_event: EventWriter<PlayerLeaveEvent>,
-    mut update_event: EventWriter<PlayerUpdateEvent>
+    mut update_event: EventWriter<PhysObjUpdateEvent>,
 ) {
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
-        let server_message = bincode::deserialize(&message).unwrap();
+        let server_message: ReliableMessages = bincode::deserialize(&message).unwrap();
         match server_message {
-            ServerMessages::PlayerConnected { id } => {
+            ReliableMessages::PlayerConnected { id } => {
                 join_event.send(PlayerJoinEvent { player_id: id });
             }
-            ServerMessages::PlayerDisconnected { id } => {
+            ReliableMessages::PlayerDisconnected { id } => {
                 on_player_leave(id, &mut commands, &mut lobby);
                 leave_event.send(PlayerLeaveEvent { player_id: id })
             }
@@ -70,23 +68,15 @@ pub fn client_recv(
     }
 
     while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let players: HashMap<u64, [f32; 3]> = bincode::deserialize(&message).unwrap();
-        for (&player_id, &translation) in players.iter() {
-            let translation = Vec3::from(translation);
-            update_event.send( PlayerUpdateEvent { player_id, translation });
+        let server_message: UnreliableMessages = bincode::deserialize(&message).unwrap();
+        match server_message {
+            UnreliableMessages::PhysObjUpdate { objects } => {
+                for (id, data) in objects.into_iter() {
+                    update_event.send( PhysObjUpdateEvent { id, data });
+                }
+            }
         }
     }
-}
-
-fn on_new_player(id: u64, commands: &mut Commands, lobby: &mut Lobby) {
-    info!("Player {id} Connected");
-    let player_entity = commands.spawn(
-        get_player_bundle(id, Some(Vec2::default()))
-    ).with_children(|parent| {
-        parent.spawn(get_turret_bundle());
-    }).id();
-
-    lobby.players.insert(id, player_entity);
 }
 
 fn on_player_leave(id: u64, commands: &mut Commands, lobby: &mut Lobby) {

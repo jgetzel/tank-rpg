@@ -7,7 +7,7 @@ use tank_rpg::camera::{camera_move, init_camera};
 use tank_rpg::environment;
 use tank_rpg::environment::init_background;
 use tank_rpg::input_helper::{keyboard_events, mouse_position, PlayerInput};
-use tank_rpg::player::{init_player, player_move, player_turret_rotate};
+use tank_rpg::player::{player_move, player_turret_rotate};
 
 fn main() {
     App::new()
@@ -32,7 +32,7 @@ fn main() {
         )
         .add_system_set(
             SystemSet::on_enter(AppState::InGame)
-                .with_system(init_player(0,Vec2::default()))
+                // .with_system(init_player(0,Vec2::default()))
                 .with_system(init_background)
                 .with_system(init_camera)
         )

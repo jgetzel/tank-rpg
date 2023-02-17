@@ -8,8 +8,8 @@ pub type PlayerId = u64;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ReliableMessages {
-    PlayerConnected { id: u64 },
-    PlayerDisconnected { id: u64 },
+    PlayerConnected { player_id: PlayerId, object_id: ObjectId },
+    PlayerDisconnected { player_id: PlayerId },
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,7 +21,7 @@ pub enum UnreliableMessages {
 pub struct PhysicsObjData {
     pub translation: Vec3,
     pub velocity: Vec2,
-    pub sprite: SpriteEnum
+    pub sprite: SpriteEnum,
 }
 
 

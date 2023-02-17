@@ -1,3 +1,4 @@
+use bevy::app::{App, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, MouseButton, Query, Res, ResMut, Windows, With};
 use bevy::utils::HashMap;
@@ -7,7 +8,7 @@ use bevy::reflect::Reflect;
 use bevy::render::camera::RenderTarget;
 use crate::camera::MainCamera;
 use serde::{Deserialize, Serialize};
-use crate::player::You;
+use crate::player::components::You;
 
 #[derive(Default, Serialize, Deserialize, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug)]
 pub struct PlayerInput {
@@ -16,7 +17,18 @@ pub struct PlayerInput {
     pub fire_bullet: bool
 }
 
-pub fn keyboard_events(
+pub struct InputHelperPlugin;
+
+impl Plugin for InputHelperPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(PlayerInput::default())
+            .add_system(keyboard_events)
+            .add_system(mouse_position)
+            .add_system(mouse_click);
+    }
+}
+
+fn keyboard_events(
     keys: Res<Input<KeyCode>>,
     mut input: ResMut<PlayerInput>,
 ) {
@@ -52,7 +64,7 @@ pub fn keyboard_events(
     }
 }
 
-pub fn mouse_position(
+fn mouse_position(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     q_you: Query<&GlobalTransform, With<You>>,
@@ -87,7 +99,7 @@ pub fn mouse_position(
     input.turret_dir = (world_pos.truncate() - you_trans.translation().truncate()).normalize();
 }
 
-pub fn mouse_click(
+fn mouse_click(
     mut input: ResMut<PlayerInput>,
     button: ResMut<Input<MouseButton>>,
 ) {

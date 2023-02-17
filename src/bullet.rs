@@ -1,13 +1,9 @@
-use bevy::prelude::{Children, Commands, Component, Entity, EventReader, GlobalTransform, Quat, Query, Res, Transform, Vec3, With};
-use bevy::sprite::SpriteBundle;
-use bevy::utils::default;
+use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, Query, With};
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
-use crate::assets::GameAssets;
-use crate::environment::BULLET_LAYER;
 use crate::input_helper::PlayerInput;
-use crate::object::Object;
-use crate::player::{Player, PlayerTurret};
+use crate::object::components::Object;
+use crate::player::components::{Player, PlayerTurret};
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;

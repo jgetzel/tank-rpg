@@ -5,8 +5,8 @@ use bevy_rapier2d::geometry::Collider;
 use crate::assets::SpriteEnum;
 use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
 use crate::input_helper::PlayerInput;
-use crate::object::Object;
-use crate::player::{Player, PlayerTurret};
+use crate::object::components::Object;
+use crate::player::components::{Player, PlayerTurret};
 
 const TANK_SCALE: f32 = 2. / 3.;
 const _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];

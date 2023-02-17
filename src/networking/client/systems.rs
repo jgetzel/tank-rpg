@@ -1,42 +1,10 @@
 use bevy::prelude::{Commands, EventWriter, Res, ResMut};
-use bevy_renet::renet::{ClientAuthentication, DefaultChannel, RenetClient, RenetConnectionConfig};
-use std::net::UdpSocket;
-use std::time::SystemTime;
-use bevy::hierarchy::{DespawnRecursiveExt};
+use bevy_renet::renet::{DefaultChannel, RenetClient};
 use bevy::log::info;
+use bevy::hierarchy::DespawnRecursiveExt;
 use crate::input_helper::PlayerInput;
-use crate::networking::{Lobby, PROTOCOL_ID};
-use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMessages};
-use crate::networking::server::SERVER_ADDRESS;
-use crate::object::{ObjectId};
-
-pub struct PlayerJoinEvent {
-    pub player_id: u64,
-}
-
-pub struct PlayerLeaveEvent {
-    pub player_id: u64,
-}
-
-pub struct PhysObjUpdateEvent {
-    pub id: ObjectId,
-    pub data: PhysicsObjData
-}
-
-pub fn new_client() -> RenetClient {
-    let server_addr = SERVER_ADDRESS.parse().unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let connection_config = RenetConnectionConfig::default();
-    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-    let client_id = current_time.as_millis() as u64;
-    let auth = ClientAuthentication::Unsecure {
-        client_id,
-        protocol_id: PROTOCOL_ID,
-        server_addr,
-        user_data: None,
-    };
-    RenetClient::new(current_time, socket, connection_config, auth).unwrap()
-}
+use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent};
+use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 
 pub fn client_send_input(
     input: Res<PlayerInput>,
@@ -57,12 +25,12 @@ pub fn client_recv(
     while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
         let server_message: ReliableMessages = bincode::deserialize(&message).unwrap();
         match server_message {
-            ReliableMessages::PlayerConnected { id } => {
-                join_event.send(PlayerJoinEvent { player_id: id });
+            ReliableMessages::PlayerConnected { player_id, object_id } => {
+                join_event.send(PlayerJoinEvent { player_id, object_id });
             }
-            ReliableMessages::PlayerDisconnected { id } => {
-                on_player_leave(id, &mut commands, &mut lobby);
-                leave_event.send(PlayerLeaveEvent { player_id: id })
+            ReliableMessages::PlayerDisconnected { player_id } => {
+                on_player_leave(player_id, &mut commands, &mut lobby);
+                leave_event.send(PlayerLeaveEvent { player_id })
             }
         };
     }

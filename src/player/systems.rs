@@ -1,12 +1,12 @@
-use bevy::prelude::{Commands, EventReader, Query, Res, ResMut, Time, Transform};
+use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut, Time, Transform};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::math::{Quat, Vec3};
-use crate::input_helper::PlayerInput;
+use crate::client_input::PlayerInput;
 use crate::networking::{Lobby, PlayerJoinEvent};
-use crate::object::SyncedObjects;
+use crate::object::{Object, SyncedObjects};
 use crate::player;
-use crate::player::{Player, PlayerTurret};
+use crate::player::{Player, PlayerSpawnEvent, PlayerTurret};
 
 pub fn player_move(
     mut query: Query<(&mut Velocity, &Player, &PlayerInput)>,
@@ -37,14 +37,17 @@ pub fn player_turret_rotate(
 
 pub fn init_player(
     mut join_ev: EventReader<PlayerJoinEvent>,
+    mut spawn_ev_w: EventWriter<PlayerSpawnEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
-    mut objects: ResMut<SyncedObjects>
+    mut objects: ResMut<SyncedObjects>,
 ) {
     for ev in join_ev.iter() {
         info!("Player {} Connected", ev.player_id);
         let player_entity = player::spawn_new_player(&mut commands, ev.player_id, None);
+        commands.entity(player_entity).insert(Object { id: ev.object_id });
         lobby.players.insert(ev.player_id, player_entity);
         objects.objects.insert(ev.object_id, player_entity);
+        spawn_ev_w.send(PlayerSpawnEvent { player_id: ev.player_id, object_id: ev.object_id });
     }
 }

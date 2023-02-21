@@ -10,7 +10,6 @@ pub struct Player {
     pub accel: f32,
     pub max_speed: f32,
     pub friction: f32,
-    pub curr_velocity: Vec2,
 }
 
 impl Player {
@@ -20,7 +19,6 @@ impl Player {
             accel: 2400.,
             max_speed: 300.,
             friction: 500.,
-            curr_velocity: Vec2::default(),
         }
     }
 }

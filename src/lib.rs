@@ -2,25 +2,29 @@ use bevy::app::{App, Plugin};
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
 use bevy_rapier2d::prelude::{RapierDebugRenderPlugin, Velocity};
 use crate::assets::{AppState, AssetLoaderPlugin};
 use crate::camera::GameCameraPlugin;
 use crate::environment::EnvironmentPlugin;
-use crate::input_helper::{InputHelperPlugin, PlayerInput};
+use crate::client_input::{ClientInputPlugin, PlayerInput};
 use crate::networking::client::ClientPlugin;
 use crate::networking::{Lobby, NetworkPlugin};
 use crate::networking::server::ServerPlugin;
 use crate::object::SyncedObjects;
+use crate::physics::PhysicsPlugin;
 use crate::player::PlayerPlugin;
 
-pub mod assets;
-pub mod object;
-pub mod camera;
-pub mod environment;
-pub mod input_helper;
-pub mod player;
-pub mod bullet;
-pub mod networking;
+mod assets;
+mod object;
+mod camera;
+mod environment;
+mod client_input;
+mod player;
+mod bullet;
+mod networking;
+mod physics;
+mod sprite_updater;
 
 pub struct ClientExecutablePlugin;
 
@@ -45,6 +49,7 @@ impl Plugin for ServerExecutablePlugin {
         )
             .add_plugin(DefaultExecutablePlugin)
             .add_plugin(ServerPlugin);
+
     }
 }
 
@@ -59,15 +64,15 @@ impl Plugin for DefaultExecutablePlugin {
         app.add_plugin(AssetLoaderPlugin)
             .add_plugin(NetworkPlugin)
             .add_plugin(EnvironmentPlugin)
-            .add_plugin(InputHelperPlugin)
+            .add_plugin(ClientInputPlugin)
             .add_plugin(GameCameraPlugin)
-            .add_plugin(PlayerPlugin);
+            .add_plugin(PlayerPlugin)
+            .add_plugin(PhysicsPlugin);
 
         #[cfg(debug_assertions)]
         app.add_plugin(WorldInspectorPlugin)
-            .add_plugin(RapierDebugRenderPlugin::default())
-            .register_type::<PlayerInput>()
-            .register_type::<Velocity>();
+            .register_type::<PlayerInput>();
+
     }
 }
 

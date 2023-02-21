@@ -1,13 +1,16 @@
 mod systems;
+pub mod resources;
 
 use bevy::prelude::{IntoSystemDescriptor, SystemLabel, SystemSet};
 use bevy_renet::renet::{ClientAuthentication, RenetClient, RenetConnectionConfig};
 use std::net::UdpSocket;
 use std::time::SystemTime;
 use bevy::app::{App, Plugin};
-use bevy::hierarchy::DespawnRecursiveExt;
 use bevy_renet::RenetClientPlugin;
-use crate::networking::{NetworkPlugin, PROTOCOL_ID};
+use serde::{Deserialize, Serialize};
+use resources::RequestIdCounter;
+use crate::client_input::PlayerInput;
+use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
 use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectSyncPlugin;
@@ -20,14 +23,23 @@ impl Plugin for ClientPlugin {
             .add_plugin(ObjectSyncPlugin);
 
         app.insert_resource(new_client())
+            .insert_resource(RequestIdCounter::default())
             .add_system_set(
             SystemSet::new()
                 .with_run_criteria(bevy_renet::run_if_client_connected)
                 .with_system(systems::client_recv.label(ClientReceive))
-                .with_system(systems::client_send_input.label(ClientSend)
+                .with_system(systems::client_send.label(ClientSend)
                     .after(ClientReceive))
         );
     }
+}
+
+pub type RequestId = u64;
+
+#[derive(Serialize, Deserialize)]
+pub struct ClientInputMessage {
+    pub input: PlayerInput,
+    pub request_id: RequestId,
 }
 
 #[derive(SystemLabel)]

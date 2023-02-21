@@ -1,4 +1,5 @@
 use bevy::asset::Handle;
+use bevy::math::Vec3;
 use bevy::prelude::{Commands, default, Entity, EventReader, Image, Query, Res, ResMut, SpriteBundle, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use crate::assets::{GameAssets, SpriteEnum};
@@ -30,6 +31,9 @@ pub fn phys_obj_updater(
                         commands.entity(entity).insert(
                             SpriteBundle {
                                 texture: assets.get(ev.data.sprite),
+                                transform: Transform {
+                                    ..default()
+                                },
                                 ..default()
                             });
                     };

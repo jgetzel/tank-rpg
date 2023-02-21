@@ -10,16 +10,17 @@ use crate::camera::MainCamera;
 use serde::{Deserialize, Serialize};
 use crate::player::components::You;
 
-#[derive(Default, Serialize, Deserialize, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug)]
+#[derive(Default, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug, Clone,
+Serialize, Deserialize)]
 pub struct PlayerInput {
     pub movement: Vec2,
     pub turret_dir: Vec2,
-    pub fire_bullet: bool
+    pub fire_bullet: bool,
 }
 
-pub struct InputHelperPlugin;
+pub struct ClientInputPlugin;
 
-impl Plugin for InputHelperPlugin {
+impl Plugin for ClientInputPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(PlayerInput::default())
             .add_system(keyboard_events)
@@ -79,7 +80,6 @@ fn mouse_position(
     let Some(window) = (if let RenderTarget::Window(id) = camera.target
     { windows.get(id) } else { windows.get_primary() })
         else { return; };
-
 
 
     let Some(screen_pos) = window.cursor_position() else { return; };

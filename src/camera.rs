@@ -4,9 +4,9 @@ use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Res,
 use bevy::time::Time;
 use bevy_renet::renet::RenetClient;
 use crate::environment::CAMERA_LAYER;
-use crate::networking::PlayerJoinEvent;
 use crate::networking::Lobby;
 use crate::player::components::You;
+use crate::player::PlayerSpawnEvent;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -39,13 +39,13 @@ fn camera_move(
 }
 
 fn you_tag_adder(
-    mut join_event: EventReader<PlayerJoinEvent>,
+    mut spawn_event: EventReader<PlayerSpawnEvent>,
     mut commands: Commands,
     client: Option<Res<RenetClient>>,
     lobby: Res<Lobby>,
 ) {
     let Some(client) = client else { return; };
-    for ev in join_event.iter() {
+    for ev in spawn_event.iter() {
         if ev.player_id == client.client_id() {
             if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
                 commands.entity(player_entity).insert(You);

@@ -4,14 +4,13 @@ use bevy_rapier2d::dynamics::{Damping, LockedAxes, RigidBody, Velocity};
 use bevy_rapier2d::geometry::Collider;
 use crate::assets::SpriteEnum;
 use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
-use crate::input_helper::PlayerInput;
+use crate::client_input::PlayerInput;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 
-const TANK_SCALE: f32 = 2. / 3.;
 const _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
 const TURRET_POSITION: [f32; 2] = [0., 30.];
-const TANK_COLLIDER_RADIUS: f32 = 60.;
+const TANK_COLLIDER_RADIUS: f32 = 45.;
 
 pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
     let position = match position {
@@ -26,7 +25,6 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
         SpriteEnum::TankGray,
         SpatialBundle {
             transform: Transform {
-                scale: Vec3::ONE * TANK_SCALE,
                 translation: position.extend(PLAYER_LAYER),
                 ..default()
             },

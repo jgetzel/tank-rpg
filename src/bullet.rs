@@ -1,7 +1,7 @@
 use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, Query, With};
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
-use crate::input_helper::PlayerInput;
+use crate::client_input::PlayerInput;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 

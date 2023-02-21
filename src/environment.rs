@@ -1,9 +1,6 @@
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Camera2dBundle, Commands, default, Res, ResMut, SystemSet, Transform};
+use bevy::prelude::{Camera2dBundle, Commands, default, Res, SystemSet, Transform};
 use bevy::sprite::SpriteBundle;
-use bevy_rapier2d::plugin::RapierConfiguration;
-use bevy::math::Vec2;
-use bevy_rapier2d::prelude::{NoUserData, RapierPhysicsPlugin};
 use crate::assets::{AppState, GameAssets, SpriteEnum};
 use crate::camera::MainCamera;
 
@@ -17,18 +14,12 @@ pub struct EnvironmentPlugin;
 
 impl Plugin for EnvironmentPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.))
-            .add_startup_system(remove_gravity)
-            .add_system_set(
-                SystemSet::on_enter(AppState::InGame)
-                    .with_system(init_background)
-                    .with_system(init_camera)
-            );
+        app.add_system_set(
+            SystemSet::on_enter(AppState::InGame)
+                .with_system(init_background)
+                .with_system(init_camera)
+        );
     }
-}
-
-fn remove_gravity(mut config: ResMut<RapierConfiguration>) {
-    config.gravity = Vec2::new(0., 0.);
 }
 
 fn init_background(mut commands: Commands, game_assets: Option<Res<GameAssets>>) {

@@ -2,16 +2,24 @@ use bevy::prelude::{Commands, EventWriter, Res, ResMut};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 use bevy::log::info;
 use bevy::hierarchy::DespawnRecursiveExt;
-use crate::input_helper::PlayerInput;
+use crate::client_input::PlayerInput;
 use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent};
+use crate::networking::client::ClientInputMessage;
+use crate::networking::client::resources::RequestIdCounter;
 use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 
-pub fn client_send_input(
+pub fn client_send(
     input: Res<PlayerInput>,
     mut client: ResMut<RenetClient>,
+    mut request_id: ResMut<RequestIdCounter>
 ) {
-    let input_message = bincode::serialize(&*input).unwrap();
-    client.send_message(DefaultChannel::Reliable, input_message);
+    let message = ClientInputMessage {
+        input: input.clone(),
+        request_id: request_id.next_id(),
+    };
+
+    let bin_message = bincode::serialize(&message).unwrap();
+    client.send_message(DefaultChannel::Unreliable, bin_message);
 }
 
 pub fn client_recv(

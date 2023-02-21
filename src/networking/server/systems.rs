@@ -2,14 +2,14 @@ use bevy::prelude::{Commands, Entity, EventReader, Query, ResMut, Transform};
 use bevy_renet::renet::{DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
 use bevy::log::info;
 use std::net::UdpSocket;
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::ErrorKind::ConnectionReset;
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
 use crate::assets::SpriteEnum;
-use crate::input_helper::PlayerInput;
 use crate::networking::{Lobby, PROTOCOL_ID};
+use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMessages};
 use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectId;
@@ -49,10 +49,11 @@ pub fn server_recv(
     }
 
     for client_id in server.clients_id().into_iter() {
-        while let Some(message) = server.receive_message(client_id, DefaultChannel::Reliable) {
-            let player_input: PlayerInput = bincode::deserialize(&message).unwrap();
+        while let Some(message) = server.receive_message(client_id, DefaultChannel::Unreliable) {
+            let message: ClientInputMessage = bincode::deserialize(&message).unwrap();
+
             if let Some(player_entity) = lobby.players.get(&client_id) {
-                commands.entity(*player_entity).insert(player_input);
+                commands.entity(*player_entity).insert(message.input);
             }
         }
     }
@@ -130,4 +131,3 @@ fn on_client_disconnect(
     ).unwrap();
     server.broadcast_message(DefaultChannel::Reliable, message);
 }
-

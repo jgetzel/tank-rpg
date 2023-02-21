@@ -12,6 +12,7 @@ use resources::RequestIdCounter;
 use crate::client_input::PlayerInput;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
+use crate::networking::client::systems::on_player_leave;
 use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectSyncPlugin;
 
@@ -30,6 +31,7 @@ impl Plugin for ClientPlugin {
                 .with_system(systems::client_recv.label(ClientReceive))
                 .with_system(systems::client_send.label(ClientSend)
                     .after(ClientReceive))
+                .with_system(on_player_leave)
         );
     }
 }

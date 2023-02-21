@@ -1,4 +1,4 @@
-use bevy::prelude::{Commands, EventWriter, Res, ResMut};
+use bevy::prelude::{Commands, EventReader, EventWriter, Res, ResMut};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 use bevy::log::info;
 use bevy::hierarchy::DespawnRecursiveExt;
@@ -11,7 +11,7 @@ use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 pub fn client_send(
     input: Res<PlayerInput>,
     mut client: ResMut<RenetClient>,
-    mut request_id: ResMut<RequestIdCounter>
+    mut request_id: ResMut<RequestIdCounter>,
 ) {
     let message = ClientInputMessage {
         input: input.clone(),
@@ -37,7 +37,6 @@ pub fn client_recv(
                 join_event.send(PlayerJoinEvent { player_id, object_id });
             }
             ReliableMessages::PlayerDisconnected { player_id } => {
-                on_player_leave(player_id, &mut commands, &mut lobby);
                 leave_event.send(PlayerLeaveEvent { player_id })
             }
         };
@@ -48,16 +47,22 @@ pub fn client_recv(
         match server_message {
             UnreliableMessages::PhysObjUpdate { objects } => {
                 for (id, data) in objects.into_iter() {
-                    update_event.send( PhysObjUpdateEvent { id, data });
+                    update_event.send(PhysObjUpdateEvent { id, data });
                 }
             }
         }
     }
 }
 
-fn on_player_leave(id: u64, commands: &mut Commands, lobby: &mut Lobby) {
-    info!("Player {id} Disconnected");
-    if let Some(player_entity) = lobby.players.remove(&id) {
-        commands.entity(player_entity).despawn_recursive();
+pub fn on_player_leave(
+    mut leave_events: EventReader<PlayerLeaveEvent>,
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>
+) {
+    for ev in leave_events.iter() {
+        info!("Player {} Disconnected", ev.player_id);
+        if let Some(player_entity) = lobby.players.remove(&ev.player_id) {
+            commands.entity(player_entity).despawn_recursive();
+        }
     }
 }

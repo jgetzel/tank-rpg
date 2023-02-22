@@ -12,7 +12,7 @@ use resources::RequestIdCounter;
 use crate::client_input::PlayerInput;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
-use crate::networking::client::systems::on_player_leave;
+use crate::networking::client::systems::{on_player_leave, prediction_move};
 use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectSyncPlugin;
 
@@ -32,6 +32,7 @@ impl Plugin for ClientPlugin {
                 .with_system(systems::client_send.label(ClientSend)
                     .after(ClientReceive))
                 .with_system(on_player_leave)
+                .with_system(prediction_move)
         );
     }
 }
@@ -52,8 +53,6 @@ enum ClientEventSysLabel {
 
 fn new_client() -> RenetClient {
     let server_addr = SERVER_ADDRESS.parse().unwrap();
-    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let connection_config = RenetConnectionConfig::default();
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let client_id = current_time.as_millis() as u64;
     let auth = ClientAuthentication::Unsecure {
@@ -62,5 +61,9 @@ fn new_client() -> RenetClient {
         server_addr,
         user_data: None,
     };
+
+    let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+    let connection_config = RenetConnectionConfig::default();
+
     RenetClient::new(current_time, socket, connection_config, auth).unwrap()
 }

@@ -21,6 +21,7 @@ pub struct ObjectSyncPlugin;
 
 impl Plugin for ObjectSyncPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(systems::phys_obj_updater);
+        app.add_system(systems::phys_obj_updater)
+            .add_system(systems::turr_updater);
     }
 }

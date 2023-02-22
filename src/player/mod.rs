@@ -1,6 +1,9 @@
 pub mod bundles;
 pub mod components;
 mod systems;
+mod utils;
+
+pub use utils::*;
 
 use bevy::app::App;
 pub use components::*;

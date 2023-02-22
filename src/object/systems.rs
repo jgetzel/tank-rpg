@@ -1,83 +1,81 @@
-use bevy::asset::Handle;
-use bevy::math::Vec3;
-use bevy::prelude::{Commands, default, Entity, EventReader, Image, Query, Res, ResMut, SpriteBundle, Transform, With};
-use bevy_rapier2d::dynamics::Velocity;
+use std::ops::ControlFlow::Continue;
 use crate::assets::{GameAssets, SpriteEnum};
-use crate::networking::PhysObjUpdateEvent;
-use crate::object::SyncedObjects;
+use crate::networking::{PhysObjUpdateEvent, TurretUpdateEvent};
 use crate::object::components::Object;
+use crate::object::SyncedObjects;
+use bevy::prelude::{default, Commands, Entity, EventReader, Query, Res, ResMut, SpriteBundle, Transform, With, Children};
+use bevy_rapier2d::dynamics::Velocity;
+use crate::player::{Player, PlayerTurret};
 
+#[allow(clippy::type_complexity)]
 pub fn phys_obj_updater(
     mut update_event: EventReader<PhysObjUpdateEvent>,
-    mut query: Query<(&mut Transform, &mut Velocity, Option<&mut Handle<Image>>, Option<&SpriteEnum>), With<Object>>,
+    mut query: Query<(&mut Transform,
+                      Option<&mut Velocity>,
+                      Option<&mut SpriteEnum>),
+        With<Object>>,
     mut objects: ResMut<SyncedObjects>,
     assets: Res<GameAssets>,
     mut commands: Commands,
 ) {
-    for ev in update_event.iter() {
-        match objects.objects.get(&ev.id) {
+    update_event
+        .iter()
+        .for_each(|ev| match objects.objects.get(&ev.id) {
             Some(&entity) => {
-                if let Ok((mut trans, mut vel, handle, sprite)) = query.get_mut(entity) {
-                    let update_sprite = match handle {
-                        Some(_) => {
-                            match sprite {
-                                Some(&sprite) => sprite != ev.data.sprite,
-                                None => true,
-                            }
-                        }
-                        None => true,
-                    };
-                    if update_sprite {
-                        commands.entity(entity).insert(
-                            SpriteBundle {
-                                texture: assets.get(ev.data.sprite),
-                                transform: Transform {
-                                    ..default()
-                                },
-                                ..default()
-                            });
-                    };
+                if let Ok((mut trans, vel, sprite)) = query.get_mut(entity) {
                     trans.translation = ev.data.translation;
-                    vel.linvel = ev.data.velocity;
+                    if let Some(mut vel) = vel {
+                        vel.linvel = ev.data.velocity;
+                    }
+                    match sprite {
+                        Some(mut sprite) => *sprite = ev.data.sprite,
+                        None => {
+                            commands.entity(entity).insert(ev.data.sprite);
+                        }
+                    }
                 }
             }
             None => {
                 objects.objects.insert(ev.id, init_object(ev, &mut commands, &assets));
             }
-        }
-    }
+        });
 }
 
-fn init_object(
-    event: &PhysObjUpdateEvent,
-    commands: &mut Commands,
-    assets: &GameAssets,
-) -> Entity {
-    commands.spawn((
-        SpriteBundle {
-            texture: assets.get(event.data.sprite),
-            transform: Transform {
-                translation: event.data.translation,
+pub fn turr_updater(
+    mut update_event: EventReader<TurretUpdateEvent>,
+    objects: ResMut<SyncedObjects>,
+    parent_q: Query<&Children, With<Player>>,
+    mut turr_q: Query<&mut Transform, With<PlayerTurret>>
+) {
+    update_event.iter().for_each(|ev| {
+        if let Some(&ent) = objects.objects.get(&ev.parent_id) {
+            if let Ok(children) = parent_q.get(ent) {
+                children.iter().for_each(|&child| {
+                    if let Ok(mut turr) = turr_q.get_mut(child) {
+                        turr.rotation = ev.rotation;
+                    }
+                });
+            }
+        }
+    })
+}
+
+fn init_object(event: &PhysObjUpdateEvent, commands: &mut Commands, assets: &GameAssets) -> Entity {
+    commands
+        .spawn((
+            SpriteBundle {
+                texture: assets.get(event.data.sprite),
+                transform: Transform {
+                    translation: event.data.translation,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        },
-        Velocity {
-            linvel: event.data.velocity,
-            ..default()
-        },
-        Object { id: event.id }
-    )).id()
-
-    // for player in join_ev.iter().map(|e| e.player_id) {
-    //     if let Some(&player_entity) = lobby.players.get(&player) {
-    //         commands.entity(player_entity).with_children(|p| {
-    //             p.spawn(SpriteBundle {
-    //                 texture: assets.map.get(&TankGray).unwrap().clone(),
-    //                 ..default()
-    //             });
-    //         });
-    //         debug!("Sprite added for Player {player}");
-    //     }
-    // }
+            Velocity {
+                linvel: event.data.velocity,
+                ..default()
+            },
+            Object { id: event.id },
+        ))
+        .id()
 }

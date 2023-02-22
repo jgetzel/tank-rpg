@@ -2,8 +2,7 @@ use bevy::app::{App, Plugin};
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-use bevy_rapier2d::plugin::{NoUserData, RapierPhysicsPlugin};
-use bevy_rapier2d::prelude::{RapierDebugRenderPlugin, Velocity};
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use crate::assets::{AppState, AssetLoaderPlugin};
 use crate::camera::GameCameraPlugin;
 use crate::environment::EnvironmentPlugin;
@@ -14,6 +13,7 @@ use crate::networking::server::ServerPlugin;
 use crate::object::SyncedObjects;
 use crate::physics::PhysicsPlugin;
 use crate::player::PlayerPlugin;
+use crate::sprite_updater::SpriteUpdatePlugin;
 
 mod assets;
 mod object;
@@ -33,6 +33,8 @@ impl Plugin for ClientExecutablePlugin {
         app.add_plugins(DefaultPlugins
             .set(get_window_plugin("Client Window"))
             .set(get_log_plugin())
+            .build()
+            .add_before::<AssetPlugin, _>(EmbeddedAssetPlugin)
         )
             .add_plugin(DefaultExecutablePlugin)
             .add_plugin(ClientPlugin);
@@ -46,6 +48,8 @@ impl Plugin for ServerExecutablePlugin {
         app.add_plugins(DefaultPlugins
             .set(get_window_plugin("Server Window"))
             .set(get_log_plugin())
+            .build()
+            .add_before::<AssetPlugin, _>(EmbeddedAssetPlugin)
         )
             .add_plugin(DefaultExecutablePlugin)
             .add_plugin(ServerPlugin);
@@ -67,7 +71,8 @@ impl Plugin for DefaultExecutablePlugin {
             .add_plugin(ClientInputPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)
-            .add_plugin(PhysicsPlugin);
+            .add_plugin(PhysicsPlugin)
+            .add_plugin(SpriteUpdatePlugin);
 
         #[cfg(debug_assertions)]
         app.add_plugin(WorldInspectorPlugin)

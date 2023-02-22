@@ -1,6 +1,6 @@
 use bevy::app::App;
 use bevy::asset::Handle;
-use bevy::prelude::{Commands, default, Entity, Image, Plugin, Query, Res, SpriteBundle};
+use bevy::prelude::{Commands, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform};
 use crate::assets::{GameAssets, SpriteEnum};
 
 pub struct SpriteUpdatePlugin;
@@ -11,35 +11,44 @@ impl Plugin for SpriteUpdatePlugin {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn update_sprite_handle(
-    q: Query<(Entity, &SpriteEnum, Option<&Handle<Image>>)>,
+    q: Query<(Entity, &SpriteEnum, Option<&Handle<Image>>, Option<&Sprite>, Option<&Transform>)>,
     assets: Res<GameAssets>,
     mut commands: Commands,
 ) {
-    for (ent, &sprite, handle) in q.iter() {
+    q.iter().for_each(|(ent, &sprite_enum, handle, sprite_info, trans, )| {
         enum ActionType {
             UpdateHandle,
-            InsertHandle,
+            InsertBundle,
             Neither,
         }
 
         let action = match handle {
             Some(handle) => {
-                if handle != &assets.get(sprite)
+                if handle != &assets.get(sprite_enum)
                 { ActionType::UpdateHandle } else { ActionType::Neither }
             }
-            None => ActionType::InsertHandle,
+            None => ActionType::InsertBundle,
         };
         match action {
-            ActionType::UpdateHandle => { commands.entity(ent).insert(assets.get(sprite)); }
-            ActionType::InsertHandle => {
-                commands.entity(ent).insert(
+            ActionType::UpdateHandle => { commands.entity(ent).insert(assets.get(sprite_enum)); }
+            ActionType::InsertBundle => {
+                let mut ent_commands = commands.entity(ent);
+                let ent_commands = ent_commands.insert(
                     SpriteBundle {
-                        texture: assets.get(sprite),
+                        texture: assets.get(sprite_enum),
                         ..default()
                     });
+
+                if let Some(sprite_info) = sprite_info {
+                    ent_commands.insert(sprite_info.clone());
+                }
+                if let Some(&trans) = trans {
+                    ent_commands.insert(trans);
+                }
             }
             ActionType::Neither => {}
         };
-    }
+    });
 }

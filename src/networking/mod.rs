@@ -4,7 +4,7 @@ pub mod messages;
 
 use std::collections::HashMap;
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Entity, Resource};
+use bevy::prelude::{Entity, Quat, Resource};
 use crate::networking::messages::{PhysicsObjData, PlayerId};
 use crate::object::ObjectId;
 
@@ -17,7 +17,8 @@ impl Plugin for NetworkPlugin {
         app.insert_resource(Lobby::default());
         app.add_event::<PlayerJoinEvent>()
             .add_event::<PlayerLeaveEvent>()
-            .add_event::<PhysObjUpdateEvent>();
+            .add_event::<PhysObjUpdateEvent>()
+            .add_event::<TurretUpdateEvent>();
     }
 }
 
@@ -38,4 +39,9 @@ pub struct PlayerLeaveEvent {
 pub struct PhysObjUpdateEvent {
     pub id: ObjectId,
     pub data: PhysicsObjData
+}
+
+pub struct TurretUpdateEvent {
+    pub parent_id: ObjectId,
+    pub rotation: Quat,
 }

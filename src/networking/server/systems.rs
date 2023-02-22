@@ -1,41 +1,24 @@
-use bevy::prelude::{Commands, Entity, EventReader, Query, ResMut, Transform};
-use bevy_renet::renet::{DefaultChannel, RenetConnectionConfig, RenetError, RenetServer, ServerAuthentication, ServerConfig, ServerEvent};
+use bevy::prelude::{Children, Commands, Entity, EventReader, Query, ResMut, Transform, With};
+use bevy_renet::renet::{DefaultChannel, RenetError, RenetServer, ServerEvent};
 use bevy::log::info;
-use std::net::UdpSocket;
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::ErrorKind::ConnectionReset;
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
 use crate::assets::SpriteEnum;
-use crate::networking::{Lobby, PROTOCOL_ID};
+use crate::networking::Lobby;
 use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMessages};
-use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectId;
 use crate::object::components::Object;
-use crate::player::spawn_new_player;
-
-pub fn new_server() -> RenetServer {
-    let server_addr = SERVER_ADDRESS.parse().unwrap();
-    let socket = UdpSocket::bind(server_addr).unwrap();
-    let connection_config = RenetConnectionConfig::default();
-    let server_config = ServerConfig::new(
-        64,
-        PROTOCOL_ID,
-        server_addr,
-        ServerAuthentication::Unsecure);
-    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-
-    RenetServer::new(current_time, server_config, connection_config, socket).unwrap()
-}
+use crate::player::{Player, PlayerTurret, spawn_new_player};
 
 pub fn server_recv(
     mut server: ResMut<RenetServer>,
     mut server_events: EventReader<ServerEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
-    mut objects: Query<&Object>
+    mut objects: Query<&Object>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -59,21 +42,40 @@ pub fn server_recv(
     }
 }
 
-pub fn server_send(
+pub fn server_send_phys_obj(
     mut server: ResMut<RenetServer>,
     query: Query<(&Object, &Transform, &Velocity, &SpriteEnum)>,
 ) {
-    let mut objects: HashMap<ObjectId, PhysicsObjData> = HashMap::new();
-    for (object, transform, vel, &sprite) in query.iter() {
-        objects.insert(object.id, PhysicsObjData {
-            translation: transform.translation,
-            velocity: vel.linvel,
-            sprite
-        });
-    }
+    let objects = query.iter()
+        .map(|(object, trans, vel, &sprite)| {
+            (object.id, PhysicsObjData {
+                translation: trans.translation,
+                velocity: vel.linvel,
+                sprite,
+            })
+        }).collect();
     let sync_msg = bincode::serialize(&UnreliableMessages::PhysObjUpdate { objects })
         .unwrap();
     server.broadcast_message(DefaultChannel::Unreliable, sync_msg);
+}
+
+pub fn server_send_turrets(
+    mut server: ResMut<RenetServer>,
+    player_q: Query<(&Object, &Children), With<Player>>,
+    turr_q: Query<&Transform, With<PlayerTurret>>,
+) {
+    let turrets= player_q.iter()
+        .flat_map(|(object, children)| {
+            children.iter().filter_map(|&ent| {
+              match turr_q.get(ent) {
+                  Ok(trans) => Some((object.id, trans.rotation)),
+                  Err(_) => None,
+              }
+            })
+        }).collect();
+    let msg = bincode::serialize(&UnreliableMessages::TurretRotationUpdate { turrets })
+        .unwrap();
+    server.broadcast_message(DefaultChannel::Unreliable, msg)
 }
 
 pub fn force_disconnect_handler(mut renet_err: EventReader<RenetError>) {
@@ -83,7 +85,6 @@ pub fn force_disconnect_handler(mut renet_err: EventReader<RenetError>) {
                 return;
             }
         };
-
         panic!("{e:?}");
     }
 }
@@ -93,14 +94,14 @@ fn on_client_connect(
     commands: &mut Commands,
     server: &mut RenetServer,
     lobby: &mut Lobby,
-    objects: &mut Query<&Object>
+    objects: &mut Query<&Object>,
 ) {
     info!("Player {new_player_id} Connected.");
     let new_player_entity: Entity = spawn_new_player(commands, *new_player_id, None);
     let new_object = Object::new();
     commands.entity(new_player_entity).insert(new_object);
     for (&player_id, &player) in lobby.players.iter() {
-        let object_id= objects.get_mut(player).unwrap().id;
+        let object_id = objects.get_mut(player).unwrap().id;
         let message = bincode::serialize(
             &ReliableMessages::PlayerConnected { player_id, object_id }
         ).unwrap();

@@ -1,5 +1,6 @@
-use bevy::prelude::{Component, Entity};
+use bevy::prelude::{Component, Entity, Reflect, Resource};
 use bevy::math::Vec2;
+use serde::{Deserialize, Serialize};
 
 #[derive(Component)]
 pub struct You;
@@ -38,4 +39,12 @@ impl Default for PlayerTurret {
             bullet_speed: 600.,
         }
     }
+}
+
+#[derive(Default, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug, Clone,
+Serialize, Deserialize)]
+pub struct PlayerInput {
+    pub movement: Vec2,
+    pub turret_dir: Vec2,
+    pub fire_bullet: bool,
 }

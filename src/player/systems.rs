@@ -2,10 +2,9 @@ use bevy::prelude::{BuildChildren, Children, Commands, DespawnRecursiveExt, Even
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::math::{Quat, Vec3};
-use crate::client_input::PlayerInput;
+use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, PlayerJoinEvent};
 use crate::object::{Object, SyncedObjects};
-use crate::player;
 use crate::player::{Player, PlayerSpawnEvent, PlayerTurret};
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::player::utils::calc_player_next_velocity;

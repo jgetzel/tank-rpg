@@ -1,12 +1,25 @@
-use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, Query, With};
+use bevy::app::App;
+use bevy::log::debug;
+use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, info, Plugin, Quat, Query, Transform, TransformBundle, Vec3, With};
+use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
-use crate::client_input::PlayerInput;
+use crate::assets::SpriteEnum;
+use crate::player::components::PlayerInput;
+use crate::environment::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;
+
+pub struct BulletPlugin;
+
+impl Plugin for BulletPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(fire_bullet);
+    }
+}
 
 #[derive(Component)]
 pub struct Bullet {
@@ -14,44 +27,34 @@ pub struct Bullet {
 }
 
 
-pub fn fire_bullet(
+fn fire_bullet(
     mut commands: Commands,
     query: Query<(Entity, &PlayerInput, &Children), With<Player>>,
     turret_query: Query<(&PlayerTurret, &GlobalTransform)>,
-    // assets: Res<GameAssets>,
 ) {
-
-    for (entity, input, children) in query.iter() {
-        if !input.fire_bullet { return; };
-        for child in children.iter() {
-            let Ok((turret, trans)) = turret_query.get(*child)
-                else { continue; };
-
-            // let angle = turret.direction.y.atan2(turret.direction.x);
-            // let start_pos = trans.translation().truncate() + turret.direction * BULLET_OFFSET;
-            let bullet = commands.spawn((
+    query.iter().for_each(|(ent, input, children)| {
+        if !input.fire_bullet { return; }
+        children.iter().for_each(|&child| {
+            let Ok((turret, trans)) = turret_query.get(child)
+                else { return; };
+            let angle = turret.direction.y.atan2(turret.direction.x);
+            let start_pos = trans.translation().truncate() + turret.direction * BULLET_OFFSET;
+            commands.spawn((
                 Bullet {
-                    owner: Some(entity),
+                    owner: Some(ent),
                 },
-                // SpriteBundle {
-                //     texture: assets.bullet.clone(),
-                //     transform: Transform {
-                //         translation: start_pos.extend(BULLET_LAYER),
-                //         rotation: Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle),
-                //         ..default()
-                //     },
-                //     ..default()
-                // },
-            )).id();
-
-            commands.entity(bullet)
-                .insert((
-                    Object::new(),
-                    RigidBody::KinematicVelocityBased,
-                    Collider::ball(BULLET_COLLIDER_RADIUS),
-                    Sensor,
-                    Velocity::linear(turret.direction * turret.bullet_speed),
-                ));
-        }
-    }
+                SpriteEnum::Bullet,
+                TransformBundle::from_transform(Transform {
+                    translation: start_pos.extend(BULLET_LAYER),
+                    rotation: Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle),
+                    ..default()
+                }),
+                Object::new(),
+                Velocity::linear(turret.direction * turret.bullet_speed),
+                RigidBody::KinematicVelocityBased,
+                Collider::ball(BULLET_COLLIDER_RADIUS),
+                Sensor,
+            ));
+        });
+    });
 }

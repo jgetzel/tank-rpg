@@ -1,5 +1,5 @@
 use bevy::prelude::Vec2;
-use crate::client_input::PlayerInput;
+use crate::player::components::PlayerInput;
 use crate::player::Player;
 
 pub fn calc_player_next_velocity(

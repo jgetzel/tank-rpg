@@ -4,7 +4,7 @@ use bevy::log::info;
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::time::Time;
 use bevy_rapier2d::prelude::Velocity;
-use crate::client_input::PlayerInput;
+use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::ClientInputMessage;
 use crate::networking::client::resources::RequestIdCounter;

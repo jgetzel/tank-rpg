@@ -4,22 +4,21 @@ use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use crate::assets::{AppState, AssetLoaderPlugin};
+use crate::bullet::BulletPlugin;
 use crate::camera::GameCameraPlugin;
 use crate::environment::EnvironmentPlugin;
-use crate::client_input::{ClientInputPlugin, PlayerInput};
 use crate::networking::client::ClientPlugin;
 use crate::networking::{Lobby, NetworkPlugin};
 use crate::networking::server::ServerPlugin;
 use crate::object::SyncedObjects;
 use crate::physics::PhysicsPlugin;
-use crate::player::PlayerPlugin;
+use crate::player::{PlayerInput, PlayerPlugin};
 use crate::sprite_updater::SpriteUpdatePlugin;
 
 mod assets;
 mod object;
 mod camera;
 mod environment;
-mod client_input;
 mod player;
 mod bullet;
 mod networking;
@@ -68,9 +67,9 @@ impl Plugin for DefaultExecutablePlugin {
         app.add_plugin(AssetLoaderPlugin)
             .add_plugin(NetworkPlugin)
             .add_plugin(EnvironmentPlugin)
-            .add_plugin(ClientInputPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)
+            .add_plugin(BulletPlugin)
             .add_plugin(PhysicsPlugin)
             .add_plugin(SpriteUpdatePlugin);
 

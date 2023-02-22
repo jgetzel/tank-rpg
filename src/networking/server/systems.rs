@@ -2,7 +2,11 @@ use bevy::prelude::{Children, Commands, Entity, EventReader, Query, ResMut, Tran
 use bevy_renet::renet::{DefaultChannel, RenetError, RenetServer, ServerEvent};
 use bevy::log::info;
 use std::io::ErrorKind::ConnectionReset;
+use std::io::Read;
+use std::mem::size_of;
 use bevy::hierarchy::DespawnRecursiveExt;
+use bevy::render::render_resource::encase::private::RuntimeSizedArray;
+use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
 use crate::assets::SpriteEnum;
@@ -42,11 +46,13 @@ pub fn server_recv(
     }
 }
 
+const UNRELIABLE_BYTE_MAX: usize = 3000;
+
 pub fn server_send_phys_obj(
     mut server: ResMut<RenetServer>,
     query: Query<(&Object, &Transform, &Velocity, &SpriteEnum)>,
 ) {
-    let objects = query.iter()
+    let objects: Vec<(ObjectId, PhysicsObjData)> = query.iter()
         .map(|(object, trans, vel, &sprite)| {
             (object.id, PhysicsObjData {
                 translation: trans.translation,
@@ -54,9 +60,20 @@ pub fn server_send_phys_obj(
                 sprite,
             })
         }).collect();
-    let sync_msg = bincode::serialize(&UnreliableMessages::PhysObjUpdate { objects })
-        .unwrap();
-    server.broadcast_message(DefaultChannel::Unreliable, sync_msg);
+
+    let chunk_size =
+        (UNRELIABLE_BYTE_MAX - 8) / (size_of::<ObjectId>() + size_of::<PhysicsObjData>());
+    objects.iter()
+        .par_chunk_map(&TaskPool::new(), chunk_size, |chunk| {
+            chunk.iter().cloned()
+                .collect::<HashMap<ObjectId, PhysicsObjData>>()
+        }).into_iter().for_each(|objects|
+        {
+            let sync_msg = bincode::serialize(&UnreliableMessages::PhysObjUpdate { objects })
+                .unwrap();
+            info!("Size of message in bytes: {:?}", sync_msg.len());
+            server.broadcast_message(DefaultChannel::Unreliable, sync_msg);
+        });
 }
 
 pub fn server_send_turrets(
@@ -64,13 +81,13 @@ pub fn server_send_turrets(
     player_q: Query<(&Object, &Children), With<Player>>,
     turr_q: Query<&Transform, With<PlayerTurret>>,
 ) {
-    let turrets= player_q.iter()
+    let turrets = player_q.iter()
         .flat_map(|(object, children)| {
             children.iter().filter_map(|&ent| {
-              match turr_q.get(ent) {
-                  Ok(trans) => Some((object.id, trans.rotation)),
-                  Err(_) => None,
-              }
+                match turr_q.get(ent) {
+                    Ok(trans) => Some((object.id, trans.rotation)),
+                    Err(_) => None,
+                }
             })
         }).collect();
     let msg = bincode::serialize(&UnreliableMessages::TurretRotationUpdate { turrets })

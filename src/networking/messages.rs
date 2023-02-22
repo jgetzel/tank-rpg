@@ -18,7 +18,7 @@ pub enum UnreliableMessages {
     TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PhysicsObjData {
     pub translation: Vec3,
     pub velocity: Vec2,

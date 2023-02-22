@@ -18,9 +18,7 @@ pub fn phys_obj_updater(
     assets: Res<GameAssets>,
     mut commands: Commands,
 ) {
-    update_event
-        .iter()
-        .for_each(|ev| match objects.objects.get(&ev.id) {
+    update_event.iter().for_each(|ev| match objects.objects.get(&ev.id) {
             Some(&entity) => {
                 if let Ok((mut trans, vel, sprite)) = query.get_mut(entity) {
                     trans.translation = ev.data.translation;

@@ -1,4 +1,4 @@
-use bevy::prelude::{Children, Commands, DespawnRecursiveExt, EventReader, EventWriter, Query, Res, ResMut, Time, Transform, With};
+use bevy::prelude::{BuildChildren, Children, Commands, DespawnRecursiveExt, EventReader, EventWriter, Query, Res, ResMut, Time, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::math::{Quat, Vec3};
@@ -7,6 +7,7 @@ use crate::networking::{Lobby, PlayerJoinEvent};
 use crate::object::{Object, SyncedObjects};
 use crate::player;
 use crate::player::{Player, PlayerSpawnEvent, PlayerTurret};
+use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::player::utils::calc_player_next_velocity;
 
 pub fn player_move(
@@ -43,11 +44,22 @@ pub fn init_player(
 ) {
     join_ev.iter().for_each(|ev| {
         info!("Player {} Connected", ev.player_id);
-        let player_entity = player::spawn_new_player(&mut commands, ev.player_id, None);
-        commands.entity(player_entity).insert(Object { id: ev.object_id });
-        lobby.players.insert(ev.player_id, player_entity);
-        objects.objects.insert(ev.object_id, player_entity);
+        let mut ent_cmd = match objects.objects.get(&ev.object_id) {
+            Some(&obj) => commands.entity(obj),
+            None => {
+                let ent_cmds = commands.spawn_empty();
+                objects.objects.insert( ev.object_id,ent_cmds.id());
+                ent_cmds
+            },
+        };
 
+        let player_entity = ent_cmd.insert(get_player_bundle(ev.player_id, None))
+            .insert(Object { id: ev.object_id })
+            .with_children(|p| {
+                p.spawn(get_turret_bundle());
+            }).id();
+
+        lobby.players.insert(ev.player_id, player_entity);
         spawn_ev_w.send(PlayerSpawnEvent { player_id: ev.player_id, object_id: ev.object_id });
     });
 }

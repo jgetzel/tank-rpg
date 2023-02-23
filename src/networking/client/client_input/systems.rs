@@ -1,21 +1,14 @@
-use bevy::math::Vec2;
-use bevy::prelude::{Camera, Component, GlobalTransform, KeyCode, Query, Res, ResMut, Transform, Windows, With};
-use bevy::utils::HashMap;
-use bevy::ecs::system::Resource;
-use bevy::reflect::Reflect;
+use bevy::prelude::{Camera, GlobalTransform, KeyCode, MouseButton, Query, Res, ResMut, Windows, With};
 use bevy::render::camera::RenderTarget;
+use bevy::math::Vec2;
+use bevy::input::Input;
+use bevy::utils::HashMap;
 use crate::camera::MainCamera;
-use serde::{Deserialize, Serialize};
+use crate::player::components::PlayerInput;
 use crate::player::You;
 
-#[derive(Default, Serialize, Deserialize, Component, Resource, Reflect, bevy::reflect::FromReflect, Debug)]
-pub struct PlayerInput {
-    pub movement: Vec2,
-    pub turret_dir: Vec2,
-}
-
 pub fn keyboard_events(
-    keys: Res<bevy::input::Input<KeyCode>>,
+    keys: Res<Input<KeyCode>>,
     mut input: ResMut<PlayerInput>,
 ) {
     let key_to_input_map: HashMap<KeyCode, [f32; 2]> = HashMap::from([
@@ -67,7 +60,6 @@ pub fn mouse_position(
         else { return; };
 
 
-
     let Some(screen_pos) = window.cursor_position() else { return; };
     let window_size = Vec2::new(window.width(), window.height());
 
@@ -83,4 +75,11 @@ pub fn mouse_position(
     let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
 
     input.turret_dir = (world_pos.truncate() - you_trans.translation().truncate()).normalize();
+}
+
+pub fn mouse_click(
+    mut input: ResMut<PlayerInput>,
+    button: ResMut<Input<MouseButton>>,
+) {
+    input.fire_bullet = button.just_pressed(MouseButton::Left);
 }

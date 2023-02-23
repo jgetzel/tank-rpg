@@ -1,91 +1,25 @@
-use bevy::log::{debug, info};
-use bevy::math::{Quat, Vec2, Vec3};
-use bevy::prelude::{BuildChildren, Commands, Component, default, Entity, EventReader, GlobalTransform, Query, Res, ResMut, SpriteBundle, Time, Transform, With};
-use bevy_rapier2d::dynamics::Velocity;
-use crate::assets::GameAssets;
-use crate::input_helper::PlayerInput;
-use crate::networking::client::{PlayerJoinEvent, PlayerUpdateEvent};
-use crate::networking::Lobby;
-
 pub mod bundles;
+pub mod components;
+mod systems;
+mod utils;
 
-#[derive(Component)]
-pub struct You;
+pub use utils::*;
 
-#[derive(Component, Clone)]
-pub struct Player {
-    pub id: u64,
-    pub accel: f32,
-    pub max_speed: f32,
-    pub friction: f32,
-    pub curr_velocity: Vec2,
-}
+use bevy::app::App;
+pub use components::*;
+use bevy::math::Vec2;
+use bevy::prelude::{BuildChildren, Commands, Entity, Plugin, SystemLabel};
+use crate::networking::messages::PlayerId;
+use crate::object::ObjectId;
 
-impl Player {
-    fn new(id: u64) -> Self {
-        Player {
-            id,
-            accel: 2400.,
-            max_speed: 300.,
-            friction: 500.,
-            curr_velocity: Vec2::default(),
-        }
-    }
-}
+pub struct PlayerPlugin;
 
-#[derive(Component)]
-pub struct PlayerTurret {
-    pub owner: Option<Entity>,
-    pub direction: Vec2,
-    pub bullet_speed: f32,
-}
-
-impl Default for PlayerTurret {
-    fn default() -> Self {
-        PlayerTurret {
-            owner: None,
-            direction: Vec2::default(),
-            bullet_speed: 600.,
-        }
-    }
-}
-
-pub fn init_player(
-    mut join_ev: EventReader<PlayerJoinEvent>,
-    mut commands: Commands,
-    mut lobby: ResMut<Lobby>,
-) {
-    for ev in join_ev.iter() {
-        info!("Player {} Connected", ev.player_id);
-        let player_entity = spawn_new_player(&mut commands, ev.player_id, None);
-        lobby.players.insert(ev.player_id, player_entity);
-    }
-}
-
-pub fn player_move(
-    mut query: Query<(&mut Velocity, &Player, &PlayerInput)>,
-    time: Res<Time>,
-) {
-    for (mut velocity, player, input) in query.iter_mut() {
-        let new_velocity = velocity.linvel + (player.accel * input.movement * time.delta_seconds());
-        velocity.linvel =
-            if [player.max_speed, velocity.linvel.length()].iter().all(|v| new_velocity.length() > *v) {
-                new_velocity.clamp_length_max(player.max_speed)
-            } else {
-                new_velocity
-            };
-    }
-}
-
-pub fn player_turret_rotate(
-    input: Res<PlayerInput>,
-    mut query: Query<(&mut Transform, &mut PlayerTurret)>,
-) {
-    for (mut trans, mut turret) in query.iter_mut() {
-        turret.direction = input.turret_dir;
-
-        let angle = input.turret_dir.y.atan2(input.turret_dir.x);
-        trans.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_event::<PlayerSpawnEvent>()
+            .add_system(systems::player_move)
+            .add_system(systems::player_turret_rotate)
+            .add_system(systems::init_player);
     }
 }
 
@@ -96,36 +30,13 @@ pub fn spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> 
         }).id()
 }
 
-pub fn player_sprite_spawner(
-    mut join_event: EventReader<PlayerJoinEvent>,
-    mut commands: Commands,
-    lobby: ResMut<Lobby>,
-    assets: Res<GameAssets>,
-    query: Query<&mut Transform, With<Player>>,
-) {
-    for player in join_event.iter().map(|e| e.player_id) {
-        if let Some(&player_entity) = lobby.players.get(&player) {
-            commands.entity(player_entity).with_children(|p| {
-                p.spawn(SpriteBundle {
-                    texture: assets.tank_gray.clone(),
-                    ..default()
-                });
-            });
-            debug!("Sprite added for Player {player}");
-        }
-    }
+pub struct PlayerSpawnEvent {
+    pub player_id: PlayerId,
+    pub object_id: ObjectId,
 }
 
-pub fn player_pos_updater(
-    mut update_event: EventReader<PlayerUpdateEvent>,
-    mut query: Query<&mut Transform, With<Player>>,
-    lobby: Res<Lobby>,
-) {
-    for ev in update_event.iter() {
-        if let Some(&entity) = lobby.players.get(&ev.player_id) {
-            if let Ok(mut trans) = query.get_mut(entity) {
-                trans.translation = ev.translation;
-            }
-        }
-    }
+#[derive(SystemLabel)]
+enum PlayerJoinSysLabel {
+    SpawnPlayer,
+    ConfigPlayer,
 }

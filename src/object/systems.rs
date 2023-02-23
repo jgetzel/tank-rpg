@@ -1,10 +1,10 @@
-use std::ops::ControlFlow::Continue;
-use crate::assets::{GameAssets, SpriteEnum};
+use crate::asset_loader::components::SpriteEnum;
 use crate::networking::{PhysObjUpdateEvent, TurretUpdateEvent};
 use crate::object::components::Object;
 use crate::object::SyncedObjects;
-use bevy::prelude::{default, Commands, Entity, EventReader, Query, Res, ResMut, SpriteBundle, Transform, With, Children};
+use bevy::prelude::{Children, Commands, default, Entity, EventReader, Query, Res, ResMut, SpriteBundle, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
+use crate::asset_loader::resources::SpriteAssets;
 use crate::player::{Player, PlayerTurret};
 
 #[allow(clippy::type_complexity)]
@@ -15,7 +15,7 @@ pub fn phys_obj_updater(
                       Option<&mut SpriteEnum>),
         With<Object>>,
     mut objects: ResMut<SyncedObjects>,
-    assets: Res<GameAssets>,
+    assets: Res<SpriteAssets>,
     mut commands: Commands,
 ) {
     update_event.iter().for_each(|ev| match objects.objects.get(&ev.id) {
@@ -58,7 +58,7 @@ pub fn turr_updater(
     })
 }
 
-fn init_object(event: &PhysObjUpdateEvent, commands: &mut Commands, assets: &GameAssets) -> Entity {
+fn init_object(event: &PhysObjUpdateEvent, commands: &mut Commands, assets: &SpriteAssets) -> Entity {
     commands
         .spawn((
             SpriteBundle {

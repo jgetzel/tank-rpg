@@ -1,7 +1,9 @@
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Camera2dBundle, Commands, default, Res, SystemSet, Transform};
 use bevy::sprite::SpriteBundle;
-use crate::assets::{AppState, GameAssets, SpriteEnum};
+use crate::asset_loader::AppState;
+use crate::asset_loader::components::SpriteEnum;
+use crate::asset_loader::resources::SpriteAssets;
 use crate::camera::MainCamera;
 
 pub const BACKGROUND_LAYER: f32 = -10.;
@@ -22,7 +24,7 @@ impl Plugin for EnvironmentPlugin {
     }
 }
 
-fn init_background(mut commands: Commands, game_assets: Option<Res<GameAssets>>) {
+fn init_background(mut commands: Commands, game_assets: Option<Res<SpriteAssets>>) {
     let Some(game_assets) = game_assets else { return; };
     commands.spawn(SpriteBundle {
         texture: game_assets.get(SpriteEnum::Background),

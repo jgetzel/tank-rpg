@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use bevy::prelude::{Vec3, Vec2, Quat};
 use bevy::utils::HashMap;
-use crate::assets::SpriteEnum;
+use crate::asset_loader::components::SpriteEnum;
 use crate::object::ObjectId;
 
 pub type PlayerId = u64;

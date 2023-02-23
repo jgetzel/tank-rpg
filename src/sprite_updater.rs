@@ -1,7 +1,8 @@
 use bevy::app::App;
 use bevy::asset::Handle;
 use bevy::prelude::{Commands, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform};
-use crate::assets::{GameAssets, SpriteEnum};
+use crate::asset_loader::components::SpriteEnum;
+use crate::asset_loader::resources::SpriteAssets;
 
 pub struct SpriteUpdatePlugin;
 
@@ -14,7 +15,7 @@ impl Plugin for SpriteUpdatePlugin {
 #[allow(clippy::type_complexity)]
 fn update_sprite_handle(
     q: Query<(Entity, &SpriteEnum, Option<&Handle<Image>>, Option<&Sprite>, Option<&Transform>)>,
-    assets: Res<GameAssets>,
+    assets: Res<SpriteAssets>,
     mut commands: Commands,
 ) {
     q.iter().for_each(|(ent, &sprite_enum, handle, sprite_info, trans, )| {

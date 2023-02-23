@@ -4,7 +4,7 @@ use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, info
 use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
-use crate::assets::SpriteEnum;
+use crate::asset_loader::components::SpriteEnum;
 use crate::player::components::PlayerInput;
 use crate::environment::BULLET_LAYER;
 use crate::object::components::Object;

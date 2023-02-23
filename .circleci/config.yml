@@ -17,6 +17,6 @@ jobs:
           command: cargo test
 
 workflows:
-  say-hello-workflow:
+  test-workflow:
     jobs:
       - test

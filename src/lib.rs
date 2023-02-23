@@ -3,7 +3,7 @@ use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
-use crate::assets::{AppState, AssetLoaderPlugin};
+use crate::asset_loader::{AppState, AssetLoaderPlugin};
 use crate::bullet::BulletPlugin;
 use crate::camera::GameCameraPlugin;
 use crate::environment::EnvironmentPlugin;
@@ -15,7 +15,7 @@ use crate::physics::PhysicsPlugin;
 use crate::player::{PlayerInput, PlayerPlugin};
 use crate::sprite_updater::SpriteUpdatePlugin;
 
-mod assets;
+mod asset_loader;
 mod object;
 mod camera;
 mod environment;

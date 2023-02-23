@@ -3,7 +3,7 @@ use bevy::prelude::{Bundle, default, SpatialBundle, Transform};
 use bevy::sprite::{Anchor, Sprite};
 use bevy_rapier2d::dynamics::{Damping, LockedAxes, RigidBody, Velocity};
 use bevy_rapier2d::geometry::Collider;
-use crate::assets::SpriteEnum;
+use crate::asset_loader::components::SpriteEnum;
 use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};

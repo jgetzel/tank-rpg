@@ -9,7 +9,7 @@ use bevy::render::render_resource::encase::private::RuntimeSizedArray;
 use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
-use crate::assets::SpriteEnum;
+use crate::asset_loader::components::SpriteEnum;
 use crate::networking::Lobby;
 use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMessages};
@@ -71,7 +71,6 @@ pub fn server_send_phys_obj(
         {
             let sync_msg = bincode::serialize(&UnreliableMessages::PhysObjUpdate { objects })
                 .unwrap();
-            info!("Size of message in bytes: {:?}", sync_msg.len());
             server.broadcast_message(DefaultChannel::Unreliable, sync_msg);
         });
 }

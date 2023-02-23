@@ -1,0 +1,22 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/rust:1.67.1
+    steps:
+      - checkout
+      - run: 
+          name: "Install Dependencies"
+          command: sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+      - run:
+          name: "Cargo Build"
+          command: cargo build
+      - run:
+          name: "Cargo Test"
+          command: cargo test
+
+workflows:
+  say-hello-workflow:
+    jobs:
+      - test

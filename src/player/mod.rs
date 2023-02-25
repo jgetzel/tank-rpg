@@ -8,7 +8,7 @@ pub use utils::*;
 use bevy::app::App;
 pub use components::*;
 use bevy::math::Vec2;
-use bevy::prelude::{BuildChildren, Commands, Entity, Plugin, SystemLabel};
+use bevy::prelude::{BuildChildren, Commands, Entity, Plugin};
 use crate::networking::messages::PlayerId;
 use crate::object::ObjectId;
 
@@ -33,10 +33,4 @@ pub fn spawn_new_player(commands: &mut Commands, id: u64, pos: Option<Vec2>) -> 
 pub struct PlayerSpawnEvent {
     pub player_id: PlayerId,
     pub object_id: ObjectId,
-}
-
-#[derive(SystemLabel)]
-enum PlayerJoinSysLabel {
-    SpawnPlayer,
-    ConfigPlayer,
 }

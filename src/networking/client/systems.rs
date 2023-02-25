@@ -7,18 +7,15 @@ use bevy_rapier2d::prelude::Velocity;
 use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::ClientInputMessage;
-use crate::networking::client::resources::RequestIdCounter;
 use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 use crate::player::{calc_player_next_velocity, Player, You};
 
 pub fn client_send(
     input: Res<PlayerInput>,
     mut client: ResMut<RenetClient>,
-    mut request_id: ResMut<RequestIdCounter>,
 ) {
     let message = ClientInputMessage {
         input: input.clone(),
-        request_id: request_id.next_id(),
     };
 
     let bin_message = bincode::serialize(&message).unwrap();

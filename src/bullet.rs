@@ -1,6 +1,5 @@
 use bevy::app::App;
-use bevy::log::debug;
-use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, info, Plugin, Quat, Query, Transform, TransformBundle, Vec3, With};
+use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, Plugin, Quat, Query, Transform, TransformBundle, Vec3, With};
 use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};

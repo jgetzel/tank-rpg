@@ -1,10 +1,7 @@
 mod systems;
 
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Component, SystemSet};
-use bevy::ecs::system::Resource;
-use bevy::reflect::Reflect;
-use serde::{Deserialize, Serialize};
+use bevy::prelude::{SystemSet};
 use crate::networking::client::ClientEventSysLabel::ClientSend;
 use crate::player::components::PlayerInput;
 

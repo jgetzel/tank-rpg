@@ -1,4 +1,4 @@
-use bevy::prelude::{BuildChildren, Children, Commands, DespawnRecursiveExt, EventReader, EventWriter, Query, Res, ResMut, Time, Transform, With};
+use bevy::prelude::{BuildChildren, Children, Commands, EventReader, EventWriter, Query, Res, ResMut, Time, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::math::{Quat, Vec3};

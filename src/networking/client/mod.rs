@@ -1,5 +1,4 @@
 mod systems;
-pub mod resources;
 mod client_input;
 
 pub use crate::player::components::PlayerInput;
@@ -11,7 +10,6 @@ use std::time::SystemTime;
 use bevy::app::{App, Plugin};
 use bevy_renet::RenetClientPlugin;
 use serde::{Deserialize, Serialize};
-use resources::RequestIdCounter;
 use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
@@ -28,7 +26,6 @@ impl Plugin for ClientPlugin {
             .add_plugin(ClientInputPlugin);
 
         app.insert_resource(new_client())
-            .insert_resource(RequestIdCounter::default())
             .add_system_set(
             SystemSet::new()
                 .with_run_criteria(bevy_renet::run_if_client_connected)
@@ -47,12 +44,9 @@ pub enum ClientEventSysLabel {
     ClientSend,
 }
 
-pub type RequestId = u64;
-
 #[derive(Serialize, Deserialize)]
 pub struct ClientInputMessage {
     pub input: PlayerInput,
-    pub request_id: RequestId,
 }
 
 fn new_client() -> RenetClient {

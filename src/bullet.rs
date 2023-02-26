@@ -1,4 +1,5 @@
 use bevy::app::App;
+use bevy::core::Name;
 use bevy::prelude::{Children, Commands, Component, Entity, GlobalTransform, Plugin, Quat, Query, Transform, TransformBundle, Vec3, With};
 use bevy::utils::default;
 use bevy_rapier2d::geometry::Collider;
@@ -39,6 +40,7 @@ fn fire_bullet(
             let angle = turret.direction.y.atan2(turret.direction.x);
             let start_pos = trans.translation().truncate() + turret.direction * BULLET_OFFSET;
             commands.spawn((
+                Name::from("Bullet"),
                 Bullet {
                     owner: Some(ent),
                 },

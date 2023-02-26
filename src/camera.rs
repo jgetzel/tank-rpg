@@ -1,8 +1,11 @@
 use std::iter::zip;
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Res, Transform, With, Without};
+use bevy::reflect::{ReflectSerialize, ReflectDeserialize};
+use bevy::ecs::reflect::{ReflectComponent};
+use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Reflect, Res, Transform, With, Without};
 use bevy::time::Time;
 use bevy_renet::renet::RenetClient;
+use serde::{Deserialize, Serialize};
 use crate::environment::CAMERA_LAYER;
 use crate::networking::Lobby;
 use crate::player::components::You;
@@ -10,14 +13,16 @@ use crate::player::PlayerSpawnEvent;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
-#[derive(Component)]
+#[derive(Component, Default, Reflect, Serialize, Deserialize)]
+#[reflect(Component)]
 pub struct MainCamera;
 
 pub struct GameCameraPlugin;
 
 impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(camera_move)
+        app.register_type::<MainCamera>()
+            .add_system(camera_move)
             .add_system(you_tag_adder);
     }
 }

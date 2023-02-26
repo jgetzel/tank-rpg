@@ -1,10 +1,7 @@
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Camera2dBundle, Commands, default, Res, SystemSet, Transform};
-use bevy::sprite::SpriteBundle;
+use bevy::prelude::{Commands, SystemSet};
 use crate::asset_loader::AppState;
-use crate::asset_loader::components::SpriteEnum;
-use crate::asset_loader::resources::SpriteAssets;
-use crate::camera::MainCamera;
+use crate::prefabs::{default_background, default_camera};
 
 pub const BACKGROUND_LAYER: f32 = -10.;
 pub const PLAYER_LAYER: f32 = 0.;
@@ -18,27 +15,12 @@ impl Plugin for EnvironmentPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set(
             SystemSet::on_enter(AppState::InGame)
-                .with_system(init_background)
-                .with_system(init_camera)
+                .with_system(init_default)
         );
     }
 }
 
-fn init_background(mut commands: Commands, game_assets: Option<Res<SpriteAssets>>) {
-    let Some(game_assets) = game_assets else { return; };
-    commands.spawn(SpriteBundle {
-        texture: game_assets.get(SpriteEnum::Background),
-        transform: Transform::from_xyz(0., 0., BACKGROUND_LAYER),
-        ..default()
-    });
-}
-
-fn init_camera(mut commands: Commands) {
-    commands.spawn((
-        Camera2dBundle {
-            transform: Transform::from_xyz(0., 0., CAMERA_LAYER),
-            ..default()
-        },
-        MainCamera
-    ));
+fn init_default(mut commands: Commands) {
+    commands.spawn(default_background());
+    commands.spawn(default_camera());
 }

@@ -1,3 +1,4 @@
+use bevy::core::Name;
 use bevy::math::{Vec2};
 use bevy::prelude::{Bundle, default, SpatialBundle, Transform};
 use bevy::sprite::{Anchor, Sprite};
@@ -19,6 +20,7 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
     };
 
     (
+        Name::from(format!("Player {id}")),
         Player::new(id),
         Object::new(),
         SpriteEnum::TankGray,
@@ -42,6 +44,7 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
 
 pub fn get_turret_bundle() -> impl Bundle {
     (
+        Name::from("Turret"),
         PlayerTurret::default(),
         SpriteEnum::TankGrayTurret,
         Sprite {

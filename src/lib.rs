@@ -1,7 +1,7 @@
 use bevy::app::{App, Plugin};
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
+use bevy_editor_pls::EditorPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use crate::asset_loader::{AppState, AssetLoaderPlugin};
 use crate::bullet::BulletPlugin;
@@ -24,6 +24,7 @@ mod bullet;
 mod networking;
 mod physics;
 mod sprite_updater;
+mod prefabs;
 
 pub struct ClientExecutablePlugin;
 
@@ -74,7 +75,7 @@ impl Plugin for DefaultExecutablePlugin {
             .add_plugin(SpriteUpdatePlugin);
 
         #[cfg(debug_assertions)]
-        app.add_plugin(WorldInspectorPlugin)
+        app.add_plugin(EditorPlugin)
             .register_type::<PlayerInput>();
 
     }

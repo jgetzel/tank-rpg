@@ -1,5 +1,6 @@
 mod systems;
 mod client_input;
+mod main_menu;
 
 pub use crate::player::components::PlayerInput;
 
@@ -13,8 +14,10 @@ use serde::{Deserialize, Serialize};
 use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
-use crate::networking::client::systems::{on_player_leave, prediction_move};
+use crate::networking::client::main_menu::MainMenuPlugin;
+use crate::networking::client::systems::{main_menu_on_load, on_player_leave, prediction_move};
 use crate::object::ObjectSyncPlugin;
+use crate::scenes::AppState;
 
 pub struct ClientPlugin;
 
@@ -22,6 +25,7 @@ impl Plugin for ClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetClientPlugin::default())
             .add_plugin(ObjectSyncPlugin)
+            .add_plugin(MainMenuPlugin)
             .add_plugin(ClientInputPlugin);
 
         app
@@ -33,6 +37,10 @@ impl Plugin for ClientPlugin {
                         .after(ClientReceive))
                     .with_system(on_player_leave)
                     .with_system(prediction_move)
+            )
+            .add_system_set(
+                SystemSet::on_update(AppState::Loading)
+                    .with_system(main_menu_on_load)
             );
     }
 }

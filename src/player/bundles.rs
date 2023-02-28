@@ -1,13 +1,13 @@
 use bevy::core::Name;
-use bevy::math::{Vec2};
+use bevy::math::Vec2;
 use bevy::prelude::{Bundle, default, SpatialBundle, Transform};
 use bevy::sprite::{Anchor, Sprite};
 use bevy_rapier2d::dynamics::{Damping, LockedAxes, RigidBody, Velocity};
 use bevy_rapier2d::geometry::Collider;
 use crate::asset_loader::components::SpriteEnum;
-use crate::environment::{PLAYER_LAYER, TURRET_LAYER};
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
+use crate::sprite_updater::{PLAYER_LAYER, TURRET_LAYER};
 
 const _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
 const TURRET_POSITION: [f32; 2] = [0., 20.];

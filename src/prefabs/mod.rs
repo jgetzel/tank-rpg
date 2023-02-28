@@ -1,7 +1,7 @@
 use bevy::prelude::{Bundle, Camera2dBundle, default, Transform};
 use crate::asset_loader::components::SpriteEnum;
 use crate::camera::MainCamera;
-use crate::environment::{BACKGROUND_LAYER, CAMERA_LAYER};
+use crate::sprite_updater::{BACKGROUND_LAYER, CAMERA_LAYER};
 
 pub fn default_camera() -> impl Bundle {
     (

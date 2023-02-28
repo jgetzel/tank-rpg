@@ -4,6 +4,12 @@ use bevy::prelude::{Commands, default, Entity, Image, Plugin, Query, Res, Sprite
 use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::resources::SpriteAssets;
 
+pub const BACKGROUND_LAYER: f32 = -10.;
+pub const PLAYER_LAYER: f32 = 0.;
+pub const BULLET_LAYER: f32 = 1.;
+pub const TURRET_LAYER: f32 = 2.;
+pub const CAMERA_LAYER: f32 = 100.;
+
 pub struct SpriteUpdatePlugin;
 
 impl Plugin for SpriteUpdatePlugin {

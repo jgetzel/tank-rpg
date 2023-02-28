@@ -15,7 +15,7 @@ pub struct NetworkPlugin;
 impl Plugin for NetworkPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Lobby::default());
-        app.add_event::<PlayerJoinEvent>()
+        app.add_event::<PlayerConnectEvent>()
             .add_event::<PlayerLeaveEvent>()
             .add_event::<PhysObjUpdateEvent>()
             .add_event::<TurretUpdateEvent>();
@@ -27,7 +27,7 @@ pub struct Lobby {
     pub players: HashMap<u64, Entity>,
 }
 
-pub struct PlayerJoinEvent {
+pub struct PlayerConnectEvent {
     pub player_id: PlayerId,
     pub object_id: ObjectId
 }

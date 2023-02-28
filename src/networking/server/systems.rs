@@ -1,4 +1,4 @@
-use bevy::prelude::{Children, Commands, Entity, EventReader, Query, ResMut, Transform, With};
+use bevy::prelude::{Children, Commands, Entity, EventReader, Query, Res, ResMut, State, Transform, With};
 use bevy_renet::renet::{DefaultChannel, RenetError, RenetServer, ServerEvent};
 use bevy::log::info;
 use std::io::ErrorKind::ConnectionReset;
@@ -7,6 +7,10 @@ use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
+use bevy_editor_pls::egui::Align;
+use bevy_egui::{egui, EguiContext};
+use bevy_egui::egui::Align2;
+use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::SpriteEnum;
 use crate::networking::Lobby;
 use crate::networking::client::ClientInputMessage;
@@ -14,6 +18,7 @@ use crate::networking::messages::{PhysicsObjData, ReliableMessages, UnreliableMe
 use crate::object::ObjectId;
 use crate::object::components::Object;
 use crate::player::{Player, PlayerTurret, spawn_new_player};
+use crate::scenes::AppState;
 
 pub fn server_recv(
     mut server: ResMut<RenetServer>,
@@ -101,6 +106,27 @@ pub fn force_disconnect_handler(mut renet_err: EventReader<RenetError>) {
         };
         panic!("{e:?}");
     }
+}
+
+pub fn in_game_on_load(
+    mut evt: EventReader<AssetsLoadedEvent>,
+    mut state: ResMut<State<AppState>>
+) {
+    evt.iter().for_each(|_| {
+        state.set(AppState::InGame).unwrap();
+    });
+}
+
+pub fn server_ip_display(
+    mut egui_ctx: ResMut<EguiContext>,
+    server: Res<RenetServer>,
+) {
+    egui::Window::new("Server IP")
+        .anchor(Align2([Align::Min, Align::Min]), [0., 0.])
+        .resizable(false)
+        .show(egui_ctx.ctx_mut(), |ui| {
+           ui.label(server.addr().to_string());
+        });
 }
 
 fn on_client_connect(

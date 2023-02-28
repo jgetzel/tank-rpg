@@ -1,10 +1,7 @@
-mod loading;
-mod main_menu;
+mod in_game;
 
-use bevy::app::App;
-use bevy::prelude::{Plugin};
-use crate::scenes::loading::LoadingPlugin;
-use crate::scenes::main_menu::MainMenuPlugin;
+use bevy::app::{App, Plugin};
+use bevy::prelude::{Commands, DespawnRecursiveExt, World};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -18,7 +15,15 @@ pub struct ScenePlugin;
 impl Plugin for ScenePlugin {
     fn build(&self, app: &mut App) {
         app.add_state(AppState::Loading)
-            .add_plugin(LoadingPlugin)
-            .add_plugin(MainMenuPlugin);
+            .add_plugin(in_game::InGamePlugin);
     }
+}
+
+pub fn despawn_all_entities(
+    mut commands: Commands,
+    world: &World
+) {
+    world.iter_entities().for_each(|e| {
+        commands.entity(e).despawn_recursive();
+    })
 }

@@ -8,7 +8,6 @@ use scenes::AppState;
 use crate::asset_loader::AssetLoaderPlugin;
 use crate::bullet::BulletPlugin;
 use crate::camera::GameCameraPlugin;
-use crate::environment::EnvironmentPlugin;
 use crate::networking::client::ClientPlugin;
 use crate::networking::{Lobby, NetworkPlugin};
 use crate::networking::server::ServerPlugin;
@@ -21,7 +20,6 @@ use crate::sprite_updater::SpriteUpdatePlugin;
 mod asset_loader;
 mod object;
 mod camera;
-mod environment;
 mod player;
 mod bullet;
 mod networking;
@@ -72,7 +70,6 @@ impl Plugin for DefaultExecutablePlugin {
             .add_plugin(NetworkPlugin)
             .add_plugin(EguiPlugin)
             .add_plugin(ScenePlugin)
-            .add_plugin(EnvironmentPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(BulletPlugin)

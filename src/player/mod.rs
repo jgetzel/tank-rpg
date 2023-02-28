@@ -18,8 +18,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<PlayerSpawnEvent>()
             .add_system(systems::player_move)
-            .add_system(systems::player_turret_rotate)
-            .add_system(systems::init_player);
+            .add_system(systems::player_turret_rotate);
     }
 }
 

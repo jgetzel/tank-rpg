@@ -1,14 +1,16 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut, With};
+use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut, State, With};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 use bevy::log::info;
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::time::Time;
 use bevy_rapier2d::prelude::Velocity;
+use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
-use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent, TurretUpdateEvent};
+use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 use crate::player::{calc_player_next_velocity, Player, You};
+use crate::scenes::AppState;
 
 pub fn client_send(
     input: Res<PlayerInput>,
@@ -24,7 +26,7 @@ pub fn client_send(
 
 pub fn client_recv(
     mut client: ResMut<RenetClient>,
-    mut join_event: EventWriter<PlayerJoinEvent>,
+    mut join_event: EventWriter<PlayerConnectEvent>,
     mut leave_event: EventWriter<PlayerLeaveEvent>,
     mut phys_update_event: EventWriter<PhysObjUpdateEvent>,
     mut turr_update_event: EventWriter<TurretUpdateEvent>
@@ -33,7 +35,7 @@ pub fn client_recv(
         let server_message: ReliableMessages = bincode::deserialize(&message).unwrap();
         match server_message {
             ReliableMessages::PlayerConnected { player_id, object_id } => {
-                join_event.send(PlayerJoinEvent { player_id, object_id });
+                join_event.send(PlayerConnectEvent { player_id, object_id });
             }
             ReliableMessages::PlayerDisconnected { player_id } => {
                 leave_event.send(PlayerLeaveEvent { player_id });
@@ -78,4 +80,13 @@ pub fn prediction_move(
     query.iter_mut().for_each(|(mut vel, player, input)| {
         vel.linvel = calc_player_next_velocity(vel.linvel, player, input, time.delta_seconds());
     });
+}
+
+pub fn main_menu_on_load(
+    mut evt: EventReader<AssetsLoadedEvent>,
+    mut state: ResMut<State<AppState>>,
+) {
+    evt.iter().for_each(|_| {
+        state.set(AppState::MainMenu).unwrap();
+    })
 }

@@ -46,13 +46,9 @@ pub fn keyboard_events(
 pub fn mouse_position(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
-    q_you: Query<&GlobalTransform, With<You>>,
     mut input: ResMut<PlayerInput>,
 ) {
     let Ok((camera, camera_transform)) = q_camera.get_single()
-        else { return; };
-
-    let Ok(you_trans) = q_you.get_single()
         else { return; };
 
     let Some(window) = (if let RenderTarget::Window(id) = camera.target
@@ -73,8 +69,7 @@ pub fn mouse_position(
 
     // use it to convert ndc to world-space coordinates
     let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
-
-    input.turret_dir = (world_pos.truncate() - you_trans.translation().truncate()).normalize();
+    input.mouse_pos = world_pos.truncate();
 }
 
 pub fn mouse_click(

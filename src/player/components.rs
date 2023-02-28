@@ -45,6 +45,6 @@ impl Default for PlayerTurret {
 Serialize, Deserialize)]
 pub struct PlayerInput {
     pub movement: Vec2,
-    pub turret_dir: Vec2,
+    pub mouse_pos: Vec2,
     pub fire_bullet: bool,
 }

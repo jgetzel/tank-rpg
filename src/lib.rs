@@ -2,8 +2,10 @@ use bevy::app::{App, Plugin};
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy_editor_pls::EditorPlugin;
+use bevy_egui::EguiPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
-use crate::asset_loader::{AppState, AssetLoaderPlugin};
+use scenes::AppState;
+use crate::asset_loader::AssetLoaderPlugin;
 use crate::bullet::BulletPlugin;
 use crate::camera::GameCameraPlugin;
 use crate::environment::EnvironmentPlugin;
@@ -13,6 +15,7 @@ use crate::networking::server::ServerPlugin;
 use crate::object::SyncedObjects;
 use crate::physics::PhysicsPlugin;
 use crate::player::{PlayerInput, PlayerPlugin};
+use crate::scenes::ScenePlugin;
 use crate::sprite_updater::SpriteUpdatePlugin;
 
 mod asset_loader;
@@ -25,6 +28,7 @@ mod networking;
 mod physics;
 mod sprite_updater;
 mod prefabs;
+mod scenes;
 
 pub struct ClientExecutablePlugin;
 
@@ -61,12 +65,13 @@ struct DefaultExecutablePlugin;
 
 impl Plugin for DefaultExecutablePlugin {
     fn build(&self, app: &mut App) {
-        app.add_state(AppState::Loading);
         app.insert_resource(Lobby::default())
             .insert_resource(SyncedObjects::default());
 
         app.add_plugin(AssetLoaderPlugin)
             .add_plugin(NetworkPlugin)
+            .add_plugin(EguiPlugin)
+            .add_plugin(ScenePlugin)
             .add_plugin(EnvironmentPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)
@@ -75,7 +80,8 @@ impl Plugin for DefaultExecutablePlugin {
             .add_plugin(SpriteUpdatePlugin);
 
         #[cfg(debug_assertions)]
-        app.add_plugin(EditorPlugin)
+        app
+            // .add_plugin(EditorPlugin)
             .register_type::<PlayerInput>();
 
     }

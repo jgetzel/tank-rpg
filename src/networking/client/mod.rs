@@ -14,7 +14,6 @@ use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
 use crate::networking::client::systems::{on_player_leave, prediction_move};
-use crate::networking::server::SERVER_ADDRESS;
 use crate::object::ObjectSyncPlugin;
 
 pub struct ClientPlugin;
@@ -25,16 +24,16 @@ impl Plugin for ClientPlugin {
             .add_plugin(ObjectSyncPlugin)
             .add_plugin(ClientInputPlugin);
 
-        app.insert_resource(new_client())
+        app
             .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(bevy_renet::run_if_client_connected)
-                .with_system(systems::client_recv.label(ClientReceive))
-                .with_system(systems::client_send.label(ClientSend)
-                    .after(ClientReceive))
-                .with_system(on_player_leave)
-                .with_system(prediction_move)
-        );
+                SystemSet::new()
+                    .with_run_criteria(bevy_renet::run_if_client_connected)
+                    .with_system(systems::client_recv.label(ClientReceive))
+                    .with_system(systems::client_send.label(ClientSend)
+                        .after(ClientReceive))
+                    .with_system(on_player_leave)
+                    .with_system(prediction_move)
+            );
     }
 }
 
@@ -49,8 +48,8 @@ pub struct ClientInputMessage {
     pub input: PlayerInput,
 }
 
-fn new_client() -> RenetClient {
-    let server_addr = SERVER_ADDRESS.parse().unwrap();
+pub fn new_client(server_address: &str) -> RenetClient {
+    let server_addr = server_address.parse().unwrap();
     let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
     let client_id = current_time.as_millis() as u64;
     let auth = ClientAuthentication::Unsecure {

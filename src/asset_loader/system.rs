@@ -1,8 +1,8 @@
-use bevy::prelude::{Commands, Res, ResMut, State};
+use bevy::prelude::{Commands, EventWriter, Res, ResMut};
 use bevy::asset::{AssetServer, LoadState};
-use crate::asset_loader::AppState;
+use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::{SPRITE_PATH_MAP};
-use crate::asset_loader::resources::{AssetsLoading, SpriteAssets};
+use crate::asset_loader::resources::{AssetsLoading, FontAssets, SpriteAssets};
 
 pub fn load_sprites(
     mut game_assets: ResMut<SpriteAssets>,
@@ -19,17 +19,29 @@ pub fn load_sprites(
     }
 }
 
+pub fn load_fonts(
+    mut font_assets: ResMut<FontAssets>,
+    asset_server: Res<AssetServer>,
+    mut loading: ResMut<AssetsLoading>
+) {
+    font_assets.load_assets(&asset_server);
+    font_assets.handles().into_iter().for_each(|handle| {
+        loading.0.push(handle);
+    })
+}
+
 pub fn check_assets_loaded(
     mut commands: Commands,
     server: Res<AssetServer>,
-    loading: Res<AssetsLoading>,
-    mut state: ResMut<State<AppState>>,
+    loading: Option<Res<AssetsLoading>>,
+    mut evt_wr: EventWriter<AssetsLoadedEvent>,
 ) {
+    let Some(loading) = loading else { return; };
     match server.get_group_load_state(loading.0.iter().map(|handle| handle.id)) {
         LoadState::Failed => {}
         LoadState::Loaded => {
             commands.remove_resource::<AssetsLoading>();
-            state.set(AppState::InGame).unwrap();
+            evt_wr.send(AssetsLoadedEvent);
         }
         _ => {}
     };

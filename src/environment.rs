@@ -1,6 +1,6 @@
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Commands, SystemSet};
-use crate::asset_loader::AppState;
+use crate::scenes::AppState;
 use crate::prefabs::{default_background, default_camera};
 
 pub const BACKGROUND_LAYER: f32 = -10.;

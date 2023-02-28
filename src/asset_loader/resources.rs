@@ -1,11 +1,11 @@
 use bevy::asset::{AssetServer, Handle, HandleUntyped};
-use bevy::prelude::{Image, Resource};
+use bevy::prelude::{Font, Image, Resource};
 use std::collections::HashMap;
-use crate::asset_loader::components::SpriteEnum;
+use crate::asset_loader::components::{FONT_PATH_MAP, FontEnum, SpriteEnum};
 
 #[derive(Default, Resource)]
 pub struct SpriteAssets {
-    pub map: HashMap<SpriteEnum, Handle<Image>>,
+    pub map: HashMap<SpriteEnum, Handle<Image>>, //TODO remove pub? Why is it pub?
     asset_server: Option<Box<AssetServer>>,
 }
 
@@ -20,6 +20,27 @@ impl SpriteAssets {
 
     pub fn set_asset_server(&mut self, asset_server: AssetServer) {
         self.asset_server = Some(Box::new(asset_server));
+    }
+}
+
+#[derive(Default, Resource)]
+pub struct FontAssets {
+    map: HashMap<FontEnum, Handle<Font>>,
+}
+
+impl FontAssets {
+    pub fn get(&self, font: FontEnum) -> Handle<Font> {
+        self.map.get(&font).unwrap().clone()
+    }
+
+    pub fn load_assets(&mut self, asset_server: &AssetServer) {
+        FONT_PATH_MAP.clone().into_iter().for_each(|(font, path)| {
+            self.map.insert(font, asset_server.load(format!("fonts/{path}")));
+        });
+    }
+
+    pub fn handles(&self) -> Vec<HandleUntyped> {
+        self.map.values().map(|handle| handle.clone_untyped()).collect()
     }
 }
 

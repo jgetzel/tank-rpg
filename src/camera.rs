@@ -4,7 +4,7 @@ use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Refl
 use bevy::time::Time;
 use bevy_renet::renet::RenetClient;
 use serde::{Deserialize, Serialize};
-use crate::environment::CAMERA_LAYER;
+use crate::sprite_updater::CAMERA_LAYER;
 use crate::networking::Lobby;
 use crate::player::components::You;
 use crate::player::PlayerSpawnEvent;

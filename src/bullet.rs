@@ -6,7 +6,7 @@ use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{RigidBody, Sensor, Velocity};
 use crate::asset_loader::components::SpriteEnum;
 use crate::player::components::PlayerInput;
-use crate::environment::BULLET_LAYER;
+use crate::sprite_updater::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 

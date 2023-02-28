@@ -6,7 +6,7 @@ use bevy::time::Time;
 use bevy_rapier2d::prelude::Velocity;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
-use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerJoinEvent, PlayerLeaveEvent, TurretUpdateEvent};
+use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{ReliableMessages, UnreliableMessages};
 use crate::player::{calc_player_next_velocity, Player, You};
@@ -26,7 +26,7 @@ pub fn client_send(
 
 pub fn client_recv(
     mut client: ResMut<RenetClient>,
-    mut join_event: EventWriter<PlayerJoinEvent>,
+    mut join_event: EventWriter<PlayerConnectEvent>,
     mut leave_event: EventWriter<PlayerLeaveEvent>,
     mut phys_update_event: EventWriter<PhysObjUpdateEvent>,
     mut turr_update_event: EventWriter<TurretUpdateEvent>
@@ -35,7 +35,7 @@ pub fn client_recv(
         let server_message: ReliableMessages = bincode::deserialize(&message).unwrap();
         match server_message {
             ReliableMessages::PlayerConnected { player_id, object_id } => {
-                join_event.send(PlayerJoinEvent { player_id, object_id });
+                join_event.send(PlayerConnectEvent { player_id, object_id });
             }
             ReliableMessages::PlayerDisconnected { player_id } => {
                 leave_event.send(PlayerLeaveEvent { player_id });

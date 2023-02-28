@@ -13,7 +13,7 @@ use crate::networking::PROTOCOL_ID;
 use crate::networking::server::systems::{force_disconnect_handler, in_game_on_load, server_ip_display, server_recv};
 use crate::scenes::AppState;
 
-pub const SERVER_PORT: u16 = 2340;
+pub const SERVER_PORT: u16 = 1337;
 
 pub struct ServerPlugin;
 

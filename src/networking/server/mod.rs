@@ -7,12 +7,12 @@ use bevy_renet::RenetServerPlugin;
 use bevy_renet::renet::{RenetConnectionConfig, RenetServer, ServerAuthentication, ServerConfig};
 use std::net::{SocketAddr, UdpSocket};
 use std::time::SystemTime;
-use bevy::prelude::info;
+use bevy::prelude::{info, SystemSet};
 use local_ip_address::local_ip;
 use crate::networking::PROTOCOL_ID;
-use crate::networking::server::systems::{force_disconnect_handler, server_recv};
+use crate::networking::server::systems::{force_disconnect_handler, in_game_on_load, server_recv};
+use crate::scenes::AppState;
 
-pub const SERVER_ADDRESS: &str = include_str!("../../../assets/config/server_addr.txt");
 pub const SERVER_PORT: u16 = 2340;
 
 pub struct ServerPlugin;
@@ -21,6 +21,10 @@ impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(RenetServerPlugin::default())
             .insert_resource(new_server())
+            .add_system_set(
+                SystemSet::on_update(AppState::Loading)
+                    .with_system(in_game_on_load)
+            )
             .add_system(server_recv)
             .add_system(systems::server_send_phys_obj)
             .add_system(systems::server_send_turrets)

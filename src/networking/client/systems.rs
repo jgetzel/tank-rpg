@@ -1,16 +1,17 @@
 use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut, State, With};
 use bevy_renet::renet::{DefaultChannel, RenetClient};
 use bevy::log::info;
-use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::time::Time;
 use bevy_rapier2d::prelude::Velocity;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
-use crate::networking::{Lobby, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
+use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::ClientInputMessage;
 use crate::networking::messages::{ReliableMessages, UnreliableMessages};
+use crate::object::SyncedObjects;
 use crate::player::{calc_player_next_velocity, Player, You};
 use crate::scenes::AppState;
+use crate::utils::CustomDespawn;
 
 pub fn client_send(
     input: Res<PlayerInput>,
@@ -28,6 +29,7 @@ pub fn client_recv(
     mut client: ResMut<RenetClient>,
     mut join_event: EventWriter<PlayerConnectEvent>,
     mut leave_event: EventWriter<PlayerLeaveEvent>,
+    mut despawn_event: EventWriter<ObjectDespawnEvent>,
     mut phys_update_event: EventWriter<PhysObjUpdateEvent>,
     mut turr_update_event: EventWriter<TurretUpdateEvent>
 ) {
@@ -39,6 +41,9 @@ pub fn client_recv(
             }
             ReliableMessages::PlayerDisconnected { player_id } => {
                 leave_event.send(PlayerLeaveEvent { player_id });
+            }
+            ReliableMessages::ObjectDespawn { object_id } => {
+                despawn_event.send(ObjectDespawnEvent { object_id });
             }
         };
     }
@@ -63,14 +68,27 @@ pub fn client_recv(
 pub fn on_player_leave(
     mut leave_events: EventReader<PlayerLeaveEvent>,
     mut commands: Commands,
-    mut lobby: ResMut<Lobby>
+    mut lobby: ResMut<Lobby>,
 ) {
     for ev in leave_events.iter() {
         info!("Player {} Disconnected", ev.player_id);
         if let Some(player_entity) = lobby.players.remove(&ev.player_id) {
-            commands.entity(player_entity).despawn_recursive();
+            commands.entity(player_entity).custom_despawn();
         }
     }
+}
+
+pub fn on_object_despawn (
+    mut events: EventReader<ObjectDespawnEvent>,
+    objects: Res<SyncedObjects>,
+    mut commands: Commands,
+) {
+    events.iter().for_each(|event| {
+        info!("Recieved despawn from server");
+        if let Some(&ent) = objects.objects.get(&event.object_id) {
+            commands.entity(ent).custom_despawn();
+        }
+    });
 }
 
 pub fn prediction_move(

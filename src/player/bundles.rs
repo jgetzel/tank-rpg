@@ -7,6 +7,7 @@ use bevy_rapier2d::geometry::Collider;
 use crate::asset_loader::components::SpriteEnum;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
+use crate::player::Health;
 use crate::sprite_updater::{PLAYER_LAYER, TURRET_LAYER};
 
 const _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
@@ -23,6 +24,7 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
         Name::from(format!("Player {id}")),
         Player::new(id),
         Object::new(),
+        Health::default(),
         SpriteEnum::TankGray,
         SpatialBundle {
             transform: Transform {

@@ -27,6 +27,7 @@ mod physics;
 mod sprite_updater;
 mod prefabs;
 mod scenes;
+mod utils;
 
 pub struct ClientExecutablePlugin;
 

@@ -1,9 +1,10 @@
-use bevy::prelude::{Children, GlobalTransform, Query, Res, Time, Transform, With};
+use bevy::prelude::{Children, Commands, EventReader, GlobalTransform, Query, Res, Time, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::math::{Quat, Vec3};
 use crate::player::components::PlayerInput;
-use crate::player::{Player, PlayerTurret};
+use crate::player::{DeathEvent, Player, PlayerTurret};
 use crate::player::utils::calc_player_next_velocity;
+use crate::utils::CustomDespawn;
 
 pub fn player_move(
     mut query: Query<(&mut Velocity, &Player, &PlayerInput)>,
@@ -27,5 +28,14 @@ pub fn player_turret_rotate(
                 trans.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
             }
         });
+    });
+}
+
+pub fn death_reader(
+    mut death_events: EventReader<DeathEvent>,
+    mut commands: Commands,
+) {
+    death_events.iter().for_each(|e| {
+        commands.entity(e.entity).custom_despawn();
     });
 }

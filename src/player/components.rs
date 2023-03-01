@@ -5,6 +5,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Component)]
 pub struct You;
 
+const DEFAULT_HEALTH: f32 = 20.0;
+
+#[derive(Component)]
+pub struct Health {
+    pub max_health: f32,
+    pub health: f32,
+}
+
+impl Default for Health {
+    fn default() -> Self {
+        Self {
+            max_health: DEFAULT_HEALTH,
+            health: DEFAULT_HEALTH,
+        }
+    }
+}
+
 #[derive(Component, Clone)]
 pub struct Player {
     pub id: u64,

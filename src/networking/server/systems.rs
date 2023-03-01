@@ -3,7 +3,6 @@ use bevy_renet::renet::{DefaultChannel, RenetError, RenetServer, ServerEvent};
 use bevy::log::info;
 use std::io::ErrorKind::ConnectionReset;
 use std::mem::size_of;
-use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
@@ -19,6 +18,7 @@ use crate::object::ObjectId;
 use crate::object::components::Object;
 use crate::player::{Player, PlayerTurret, spawn_new_player};
 use crate::scenes::AppState;
+use crate::utils::CustomDespawn;
 
 pub fn server_recv(
     mut server: ResMut<RenetServer>,
@@ -164,7 +164,7 @@ fn on_client_disconnect(
 ) {
     info!("Player {player_id} Disconnected");
     if let Some(player_entity) = lobby.players.remove(player_id) {
-        commands.entity(player_entity).despawn_recursive();
+        commands.entity(player_entity).custom_despawn();
     }
 
     let message = bincode::serialize(

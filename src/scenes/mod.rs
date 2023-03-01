@@ -1,7 +1,8 @@
 mod in_game;
 
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Commands, DespawnRecursiveExt, World};
+use bevy::prelude::{Commands, World};
+use crate::utils::CustomDespawn;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -24,6 +25,6 @@ pub fn despawn_all_entities(
     world: &World
 ) {
     world.iter_entities().for_each(|e| {
-        commands.entity(e).despawn_recursive();
+        commands.entity(e).custom_despawn();
     })
 }

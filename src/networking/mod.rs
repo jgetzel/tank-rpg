@@ -17,6 +17,7 @@ impl Plugin for NetworkPlugin {
         app.insert_resource(Lobby::default());
         app.add_event::<PlayerConnectEvent>()
             .add_event::<PlayerLeaveEvent>()
+            .add_event::<ObjectDespawnEvent>()
             .add_event::<PhysObjUpdateEvent>()
             .add_event::<TurretUpdateEvent>();
     }
@@ -24,7 +25,7 @@ impl Plugin for NetworkPlugin {
 
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
-    pub players: HashMap<u64, Entity>,
+    pub players: HashMap<PlayerId, Entity>,
 }
 
 pub struct PlayerConnectEvent {
@@ -33,7 +34,11 @@ pub struct PlayerConnectEvent {
 }
 
 pub struct PlayerLeaveEvent {
-    pub player_id: u64,
+    pub player_id: PlayerId,
+}
+
+pub struct ObjectDespawnEvent {
+    pub object_id: ObjectId
 }
 
 pub struct PhysObjUpdateEvent {

@@ -10,6 +10,7 @@ pub type PlayerId = u64;
 pub enum ReliableMessages {
     PlayerConnected { player_id: PlayerId, object_id: ObjectId },
     PlayerDisconnected { player_id: PlayerId },
+    ObjectDespawn { object_id: ObjectId},
 }
 
 #[derive(Debug, Serialize, Deserialize)]

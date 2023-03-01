@@ -15,7 +15,7 @@ use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::client::ClientEventSysLabel::*;
 use crate::networking::client::main_menu::MainMenuPlugin;
-use crate::networking::client::systems::{main_menu_on_load, on_player_leave, prediction_move};
+use crate::networking::client::systems::{main_menu_on_load, on_object_despawn, on_player_leave, prediction_move};
 use crate::object::ObjectSyncPlugin;
 use crate::scenes::AppState;
 
@@ -36,6 +36,7 @@ impl Plugin for ClientPlugin {
                     .with_system(systems::client_send.label(ClientSend)
                         .after(ClientReceive))
                     .with_system(on_player_leave)
+                    .with_system(on_object_despawn)
                     .with_system(prediction_move)
             )
             .add_system_set(

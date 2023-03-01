@@ -5,7 +5,6 @@ use bevy::input::Input;
 use bevy::utils::HashMap;
 use crate::camera::MainCamera;
 use crate::player::components::PlayerInput;
-use crate::player::You;
 
 pub fn keyboard_events(
     keys: Res<Input<KeyCode>>,

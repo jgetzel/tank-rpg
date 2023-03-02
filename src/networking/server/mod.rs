@@ -8,6 +8,7 @@ use bevy_renet::renet::{RenetConnectionConfig, RenetServer, ServerAuthentication
 use std::net::{SocketAddr, UdpSocket};
 use std::time::SystemTime;
 use bevy::prelude::{info, SystemSet};
+use bevy_egui::EguiPlugin;
 use local_ip_address::local_ip;
 use crate::networking::PROTOCOL_ID;
 use crate::networking::server::systems::{force_disconnect_handler, in_game_on_load, server_ip_display, server_recv};
@@ -28,8 +29,11 @@ impl Plugin for ServerPlugin {
             .add_system(server_recv)
             .add_system(systems::server_send_phys_obj)
             .add_system(systems::server_send_turrets)
-            .add_system(force_disconnect_handler)
-            .add_system(server_ip_display);
+            .add_system(force_disconnect_handler);
+
+        if app.is_plugin_added::<EguiPlugin>() {
+            app.add_system(server_ip_display);
+        }
     }
 }
 

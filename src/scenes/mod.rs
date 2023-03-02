@@ -11,9 +11,9 @@ pub enum AppState {
     InGame,
 }
 
-pub struct ScenePlugin;
+pub struct TankScenePlugin;
 
-impl Plugin for ScenePlugin {
+impl Plugin for TankScenePlugin {
     fn build(&self, app: &mut App) {
         app.add_state(AppState::Loading)
             .add_plugin(in_game::InGamePlugin);

@@ -58,7 +58,6 @@ impl Plugin for ServerExecutablePlugin {
         app
             .add_plugin(DefaultExecutablePlugin)
             .add_plugin(ServerPlugin);
-
     }
 }
 
@@ -66,25 +65,7 @@ struct DefaultExecutablePlugin;
 
 impl Plugin for DefaultExecutablePlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_plugin(CorePlugin::default())
-            .add_plugin(TimePlugin::default());
-
-        app.add_plugin(get_log_plugin())
-            .add_plugin(TransformPlugin::default())
-            .add_plugin(HierarchyPlugin::default())
-            .add_plugin(DiagnosticsPlugin::default())
-            .add_plugin(EmbeddedAssetPlugin::default())
-            .add_plugin(AssetPlugin::default())
-            .add_plugin(ScenePlugin);
-
-        if env::args().all(|arg| arg != "headless") {
-            app.add_plugins(NonHeadlessPlugins)
-                .add_plugin(EguiPlugin);
-        }
-        else {
-            app.add_plugin(ScheduleRunnerPlugin::default());
-        }
+        app.add_plugins(BevyDefaultPlugins);
 
         app.insert_resource(Lobby::default())
             .insert_resource(SyncedObjects::default());
@@ -102,20 +83,60 @@ impl Plugin for DefaultExecutablePlugin {
         app
             // .add_plugin(EditorPlugin)
             .register_type::<PlayerInput>();
-
     }
 }
 
-fn get_log_plugin() -> LogPlugin {
-    // this code is compiled only if debug assertions are enabled (debug mode)
-    #[cfg(debug_assertions)]
-    return LogPlugin {
-        level: bevy::log::Level::DEBUG,
-        filter: "debug,wgpu_core=warn,wgpu_hal=warn,mygame=debug".into(),
-    };
+struct BevyDefaultPlugins;
 
-    // this code is compiled only if debug assertions are disabled (release mode)
-    #[cfg(not(debug_assertions))]
+impl PluginGroup for BevyDefaultPlugins {
+    fn build(self) -> PluginGroupBuilder {
+        let mut group = PluginGroupBuilder::start::<Self>()
+            .add(CorePlugin::default())
+            .add(TimePlugin::default())
+            .add(get_log_plugin())
+            .add(TransformPlugin::default())
+            .add(HierarchyPlugin::default())
+            .add(DiagnosticsPlugin::default())
+            .add(EmbeddedAssetPlugin::default())
+            .add(AssetPlugin::default())
+            .add(ScenePlugin::default());
+
+        let headless = is_headless();
+        if headless {
+            group = group.add(ScheduleRunnerPlugin::default());
+        } else {
+            group = group.add(InputPlugin::default())
+                .add(WindowPlugin::default())
+                .add(WinitPlugin::default())
+                .add(RenderPlugin::default())
+                .add(ImagePlugin::default())
+                .add(CorePipelinePlugin::default())
+                .add(SpritePlugin::default())
+                .add(TextPlugin::default())
+                .add(AudioPlugin::default())
+                .add(GilrsPlugin::default())
+                .add(AnimationPlugin::default())
+                .add(EguiPlugin);
+        }
+
+        group
+    }
+}
+
+fn is_headless() -> bool {
+    env::args().any(|arg| arg == "headless")
+}
+
+fn get_log_plugin() -> LogPlugin {
+    // // this code is compiled only if debug assertions are enabled (debug mode)
+    // #[cfg(debug_assertions)]
+    // return LogPlugin {
+    //     level: bevy::log::Level::DEBUG,
+    //     filter: "debug,wgpu_core=warn,wgpu_hal=warn,mygame=debug".into(),
+    // };
+    //
+    // // this code is compiled only if debug assertions are disabled (release mode)
+    // #[cfg(not(debug_assertions))]
     return LogPlugin {
         level: bevy::log::Level::INFO,
         filter: "info,wgpu_core=warn,wgpu_hal=warn".into(),
@@ -129,24 +150,5 @@ fn get_window_plugin(title: &str) -> WindowPlugin {
             ..default()
         },
         ..default()
-    }
-}
-
-struct NonHeadlessPlugins;
-
-impl PluginGroup for NonHeadlessPlugins {
-    fn build(self) -> PluginGroupBuilder {
-        PluginGroupBuilder::start::<Self>()
-            .add(InputPlugin::default())
-            .add(WindowPlugin::default())
-            .add(WinitPlugin::default())
-            .add(RenderPlugin::default())
-            .add(ImagePlugin::default())
-            .add(CorePipelinePlugin::default())
-            .add(SpritePlugin::default())
-            .add(TextPlugin::default())
-            .add(AudioPlugin::default())
-            .add(GilrsPlugin::default())
-            .add(AnimationPlugin::default())
     }
 }

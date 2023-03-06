@@ -10,6 +10,7 @@ env:
   binary: client_main
   server_binary: server_main
   add_binaries_to_github_release: true
+  compile_wasm: false
   #itch_target: <itch.io-username>/<game-name>
 
 
@@ -20,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - if: ${{ env.compile_wasm == true }}
       - uses: little-core-labs/get-git-tag@v3.0.1
         id: get_version
       - uses: actions/checkout@v2
@@ -110,6 +112,16 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ env.binary }}.zip
           asset_name: ${{ env.binary }}-linux-${{ steps.get_version.outputs.tag }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          
+      - name: Upload server binaries to release
+        if: ${{ env.add_binaries_to_github_release == 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ env.server_binary }}.zip
+          asset_name: ${{ env.server_binary }}-linux-${{ steps.get_version.outputs.tag }}.zip
           tag: ${{ github.ref }}
           overwrite: true
 

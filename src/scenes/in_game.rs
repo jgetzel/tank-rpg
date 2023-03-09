@@ -1,5 +1,5 @@
 use bevy::app::App;
-use bevy::prelude::{Commands, EventReader, EventWriter, Plugin, ResMut, SystemSet};
+use bevy::prelude::{Commands, EventReader, EventWriter, IntoSystemAppConfig, IntoSystemConfig, OnEnter, OnUpdate, Plugin, ResMut};
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use crate::networking::{Lobby, PlayerConnectEvent};
@@ -15,13 +15,8 @@ pub struct InGamePlugin;
 impl Plugin for InGamePlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_system_set(
-                SystemSet::on_enter(AppState::InGame)
-                    .with_system(init_default)
-            ).add_system_set(
-            SystemSet::on_update(AppState::InGame)
-                .with_system(player_connect_listener)
-        );
+            .add_system(init_default.in_schedule(OnEnter(AppState::InGame)))
+            .add_system(player_connect_listener.in_set(OnUpdate(AppState::InGame)));
     }
 }
 

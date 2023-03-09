@@ -1,13 +1,14 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut, State, With};
-use bevy_renet::renet::{DefaultChannel, RenetClient};
+use bevy::prelude::{Commands, EventReader, EventWriter, NextState, Query, Res, ResMut, With};
 use bevy::log::info;
 use bevy::time::Time;
+use bevy_quinnet::client::Client;
+use bevy_quinnet::shared::channel::ChannelId;
 use bevy_rapier2d::prelude::Velocity;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
-use crate::networking::client::ClientInputMessage;
-use crate::networking::messages::{ReliableMessages, UnreliableMessages};
+use crate::networking::client::ClientMessage;
+use crate::networking::messages::*;
 use crate::object::SyncedObjects;
 use crate::player::{calc_player_next_velocity, Player, You};
 use crate::scenes::AppState;
@@ -15,54 +16,47 @@ use crate::utils::CustomDespawn;
 
 pub fn client_send(
     input: Res<PlayerInput>,
-    mut client: ResMut<RenetClient>,
+    client: Res<Client>,
 ) {
-    let message = ClientInputMessage {
-        input: input.clone(),
-    };
-
-    let bin_message = bincode::serialize(&message).unwrap();
-    client.send_message(DefaultChannel::Unreliable, bin_message);
+    client.connection().send_message_on(
+        ChannelId::Unreliable,
+        ClientMessage::InputMessage {
+            input: input.clone(),
+        }).unwrap();
 }
 
 pub fn client_recv(
-    mut client: ResMut<RenetClient>,
+    mut client: ResMut<Client>,
     mut join_event: EventWriter<PlayerConnectEvent>,
     mut leave_event: EventWriter<PlayerLeaveEvent>,
     mut despawn_event: EventWriter<ObjectDespawnEvent>,
     mut phys_update_event: EventWriter<PhysObjUpdateEvent>,
     mut turr_update_event: EventWriter<TurretUpdateEvent>
 ) {
-    while let Some(message) = client.receive_message(DefaultChannel::Reliable) {
-        let server_message: ReliableMessages = bincode::deserialize(&message).unwrap();
-        match server_message {
-            ReliableMessages::PlayerConnected { player_id, object_id } => {
-                join_event.send(PlayerConnectEvent { player_id, object_id });
+    while let Ok(Some(message)) = client.connection_mut().receive_message::<ServerMessage>() {
+        match message {
+            ServerMessage::PlayerConnected { player_id, object_id } => {
+                join_event.send(PlayerConnectEvent {player_id, object_id });
             }
-            ReliableMessages::PlayerDisconnected { player_id } => {
+            ServerMessage::PlayerDisconnected { player_id} => {
                 leave_event.send(PlayerLeaveEvent { player_id });
             }
-            ReliableMessages::ObjectDespawn { object_id } => {
+            ServerMessage::ObjectDespawn { object_id } => {
                 despawn_event.send(ObjectDespawnEvent { object_id });
             }
-        };
-    }
-
-    while let Some(message) = client.receive_message(DefaultChannel::Unreliable) {
-        let server_message: UnreliableMessages = bincode::deserialize(&message).unwrap();
-        match server_message {
-            UnreliableMessages::PhysObjUpdate { objects } => {
-                for (id, data) in objects.into_iter() {
-                    phys_update_event.send(PhysObjUpdateEvent { id, data });
-                }
-            }
-            UnreliableMessages::TurretRotationUpdate { turrets } => {
-                turrets.into_iter().for_each(|(parent_id,rotation)| {
-                   turr_update_event.send( TurretUpdateEvent { parent_id, rotation });
-                });
+            ServerMessage::PhysObjUpdate { objects } => {
+                objects.into_iter().for_each(|(id, data)| {
+                    phys_update_event.send(PhysObjUpdateEvent {id, data})
+                })
+            },
+            ServerMessage::TurretRotationUpdate { turrets } => {
+                turrets.into_iter().for_each(|(parent_id, rotation)| {
+                    turr_update_event.send(TurretUpdateEvent { parent_id, rotation });
+                })
             }
         }
     }
+
 }
 
 pub fn on_player_leave(
@@ -102,9 +96,9 @@ pub fn prediction_move(
 
 pub fn main_menu_on_load(
     mut evt: EventReader<AssetsLoadedEvent>,
-    mut state: ResMut<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>
 ) {
-    evt.iter().for_each(|_| {
-        state.set(AppState::MainMenu).unwrap();
-    })
+    if evt.iter().next().is_some() {
+        next_state.set(AppState::MainMenu);
+    }
 }

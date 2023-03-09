@@ -1,8 +1,8 @@
-use bevy::prelude::{Camera, GlobalTransform, KeyCode, MouseButton, Query, Res, ResMut, Windows, With};
-use bevy::render::camera::RenderTarget;
+use bevy::prelude::{Camera, GlobalTransform, KeyCode, MouseButton, Query, Res, ResMut, Window, With};
 use bevy::math::Vec2;
 use bevy::input::Input;
 use bevy::utils::HashMap;
+use bevy::window::PrimaryWindow;
 use crate::camera::MainCamera;
 use crate::player::components::PlayerInput;
 
@@ -43,17 +43,15 @@ pub fn keyboard_events(
 }
 
 pub fn mouse_position(
-    windows: Res<Windows>,
+    window_q: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
     mut input: ResMut<PlayerInput>,
 ) {
     let Ok((camera, camera_transform)) = q_camera.get_single()
         else { return; };
 
-    let Some(window) = (if let RenderTarget::Window(id) = camera.target
-    { windows.get(id) } else { windows.get_primary() })
+    let Ok(window) = window_q.get_single()
         else { return; };
-
 
     let Some(screen_pos) = window.cursor_position() else { return; };
     let window_size = Vec2::new(window.width(), window.height());

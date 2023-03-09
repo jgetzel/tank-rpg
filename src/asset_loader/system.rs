@@ -32,12 +32,12 @@ pub fn load_fonts(
 
 pub fn check_assets_loaded(
     mut commands: Commands,
+    mut evt_wr: EventWriter<AssetsLoadedEvent>,
     server: Res<AssetServer>,
     loading: Option<Res<AssetsLoading>>,
-    mut evt_wr: EventWriter<AssetsLoadedEvent>,
 ) {
     let Some(loading) = loading else { return; };
-    match server.get_group_load_state(loading.0.iter().map(|handle| handle.id)) {
+    match server.get_group_load_state(loading.0.iter().map(|handle| handle.id())) {
         LoadState::Failed => {}
         LoadState::Loaded => {
             commands.remove_resource::<AssetsLoading>();

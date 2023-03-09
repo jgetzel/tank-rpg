@@ -8,8 +8,6 @@ use bevy::prelude::{Entity, Quat, Resource};
 use crate::networking::messages::{PhysicsObjData, PlayerId};
 use crate::object::ObjectId;
 
-pub const PROTOCOL_ID: u64 = 7;
-
 pub struct NetworkPlugin;
 
 impl Plugin for NetworkPlugin {

@@ -1,9 +1,4 @@
-use bevy::app::App;
-use bevy::core::Name;
-use bevy::log::info;
-use bevy::prelude::{Children, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, IntoSystemDescriptor, Plugin, Quat, Query, Res, SystemLabel, Transform, TransformBundle, Vec3, With};
-use bevy::time::Time;
-use bevy::utils::{default};
+use bevy::prelude::*;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{ActiveEvents, CollisionEvent, RigidBody, Sensor, Velocity};
 use crate::asset_loader::components::SpriteEnum;
@@ -27,8 +22,8 @@ impl Plugin for BulletPlugin {
         app.add_event::<BulletCollisionEvent>()
             .add_system(fire_bullet)
             .add_system(bullet_decay)
-            .add_system(bullet_collision_sender.label(CollisionSend))
-            .add_system(bullet_collision_handler.label(CollisionHandle)
+            .add_system(bullet_collision_sender.in_set(CollisionSend))
+            .add_system(bullet_collision_handler.in_set(CollisionHandle)
                 .after(CollisionSend));
     }
 }
@@ -46,7 +41,7 @@ pub struct BulletCollisionEvent {
     pub player: Entity
 }
 
-#[derive(SystemLabel)]
+#[derive(SystemSet, Debug, Eq, PartialEq, Hash, Clone)]
 pub enum BulletSystemStage {
     CollisionSend,
     CollisionHandle

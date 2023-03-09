@@ -8,7 +8,9 @@ on:
 env:
   # update with the name of the main binary
   binary: client_main
+  server_binary: server_main
   add_binaries_to_github_release: true
+  compile_wasm: false
   #itch_target: <itch.io-username>/<game-name>
 
 
@@ -19,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - if: ${{ env.compile_wasm == true }}
       - uses: little-core-labs/get-git-tag@v3.0.1
         id: get_version
       - uses: actions/checkout@v2
@@ -80,7 +83,6 @@ jobs:
         run: |
           mkdir linux
           cp target/x86_64-unknown-linux-gnu/release/${{ env.binary }} linux/
-          cp -r assets linux/
       - name: Package as a zip
         working-directory: ./linux
         run: |
@@ -90,6 +92,18 @@ jobs:
         with:
           path: ${{ env.binary }}.zip
           name: linux
+      - name: Prepare server package
+        run: |
+          cp target/x86_64-unknown-linux-gnu/release/${{ env.server_binary }} linux/
+      - name: Package server as a zip
+        working-directory: ./linux
+        run: |
+          zip --recurse-paths ../${{ env.server_binary }}.zip .
+      - name: Upload binaries to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.server_binary }}.zip
+          name: linux
 
       - name: Upload binaries to release
         if: ${{ env.add_binaries_to_github_release == 'true' }}
@@ -98,6 +112,16 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ${{ env.binary }}.zip
           asset_name: ${{ env.binary }}-linux-${{ steps.get_version.outputs.tag }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          
+      - name: Upload server binaries to release
+        if: ${{ env.add_binaries_to_github_release == 'true' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ env.server_binary }}.zip
+          asset_name: ${{ env.server_binary }}-linux-${{ steps.get_version.outputs.tag }}.zip
           tag: ${{ github.ref }}
           overwrite: true
 

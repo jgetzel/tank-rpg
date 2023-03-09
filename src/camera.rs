@@ -2,7 +2,7 @@ use std::iter::zip;
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Reflect, Res, Transform, With, Without};
 use bevy::time::Time;
-use bevy_renet::renet::RenetClient;
+use bevy_quinnet::client::Client;
 use serde::{Deserialize, Serialize};
 use crate::sprite_updater::CAMERA_LAYER;
 use crate::networking::Lobby;
@@ -43,12 +43,12 @@ fn camera_move(
 fn you_tag_adder(
     mut spawn_event: EventReader<PlayerSpawnEvent>,
     mut commands: Commands,
-    client: Option<Res<RenetClient>>,
+    client: Option<Res<Client>>,
     lobby: Res<Lobby>,
 ) {
     let Some(client) = client else { return; };
     for ev in spawn_event.iter() {
-        if ev.player_id == client.client_id() {
+        if ev.player_id == client.get_default_connection().unwrap() {
             if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
                 commands.entity(player_entity).insert(You);
                 debug!("'You' tag added for Player {}", ev.player_id);

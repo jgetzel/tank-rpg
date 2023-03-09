@@ -1,21 +1,20 @@
 use std::net::{SocketAddr};
 use std::str::FromStr;
 use bevy::app::App;
-use bevy_egui::{EguiContext};
-use bevy::prelude::{Commands, EventReader, EventWriter, Plugin, Res, ResMut, Resource, State, SystemSet};
+use bevy::prelude::*;
 use bevy::utils::default;
-use bevy_editor_pls::egui;
-use bevy_editor_pls::egui::Align;
-use bevy_editor_pls::egui::style::Margin;
-use bevy_egui::egui::{Align2, Color32};
+use bevy_egui::egui::{Align2, Color32, Margin};
 use bevy_egui::egui::epaint::Shadow;
-use bevy_renet::renet::RenetClient;
-use crate::networking::client::new_client;
+use bevy_egui::{egui, EguiContexts};
+use bevy_quinnet::client::certificate::CertificateVerificationMode;
+use bevy_quinnet::client::Client;
+use bevy_quinnet::client::connection::{ConnectionConfiguration, ConnectionEvent};
 use crate::prefabs::default_camera;
 use crate::scenes::{AppState, despawn_all_entities};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(States, Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ConnectState {
+    #[default]
     NotConnected,
     Connecting,
 }
@@ -25,20 +24,18 @@ pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ServerIPInput("".into()))
-            .add_state(ConnectState::NotConnected)
+            .add_state::<ConnectState>()
             .add_event::<AttemptConnectEvent>()
-            .add_system_set(
-                SystemSet::on_enter(AppState::MainMenu)
-                    .with_system(init)
-            ).add_system_set(
-            SystemSet::on_update(AppState::MainMenu)
-                .with_system(main_menu_gui)
-                .with_system(connect_attempt_event_listener)
-                .with_system(in_game_on_connect)
-        ).add_system_set(
-            SystemSet::on_exit(AppState::MainMenu)
-                .with_system(despawn_all_entities)
-        );
+            .add_system(init.in_schedule(OnEnter(AppState::MainMenu)))
+            .add_systems(
+                (
+                    main_menu_gui.run_if(in_state(ConnectState::NotConnected)),
+                    connecting_gui.run_if(in_state(ConnectState::Connecting)),
+                    connect_attempt_event_listener,
+                    in_game_on_connect
+                ).in_set(OnUpdate(AppState::MainMenu))
+            )
+            .add_system(despawn_all_entities.in_schedule(OnExit(AppState::MainMenu)));
     }
 }
 
@@ -52,9 +49,9 @@ fn init(mut commands: Commands) {
 }
 
 fn main_menu_gui(
-    mut egui_ctx: ResMut<EguiContext>,
+    mut egui_ctx: EguiContexts,
     mut server_ip_string: ResMut<ServerIPInput>,
-    mut connect_writer: EventWriter<AttemptConnectEvent>
+    mut connect_writer: EventWriter<AttemptConnectEvent>,
 ) {
     let panel_frame = egui::Frame {
         inner_margin: Margin::from(10.),
@@ -70,7 +67,7 @@ fn main_menu_gui(
     egui::Window::new("Enter Server IP")
         .frame(panel_frame)
         .fixed_size([300., 50.])
-        .anchor(Align2([Align::Center, Align::Center]), [0., 0.])
+        .anchor(Align2::CENTER_CENTER, [0., 0.])
         .collapsible(false)
         .show(egui_ctx.ctx_mut(), |ui| {
             ui.horizontal_centered(|ui| {
@@ -85,24 +82,39 @@ fn main_menu_gui(
         });
 }
 
-fn connect_attempt_event_listener(
-    mut evt: EventReader<AttemptConnectEvent>,
-    server_address: Res<ServerIPInput>,
-    mut state: ResMut<State<ConnectState>>,
-    mut commands: Commands,
+fn connecting_gui(
+    mut egui_ctx: EguiContexts,
 ) {
-    if evt.iter().next().is_some() && state.set(ConnectState::Connecting).is_ok() {
-        commands.insert_resource(new_client(server_address.0.as_str()));
+    egui::Window::new("Connecting...")
+        .anchor(Align2::CENTER_CENTER, [0., 0.])
+        .collapsible(false)
+        .show(egui_ctx.ctx_mut(), |_| {});
+}
+
+fn connect_attempt_event_listener(
+    mut events: EventReader<AttemptConnectEvent>,
+    server_address: Res<ServerIPInput>,
+    mut next_state: ResMut<NextState<ConnectState>>,
+    mut client: ResMut<Client>,
+) {
+    if events.iter().next().is_some() {
+        info!("Connection attempt tried!");
+        next_state.set(ConnectState::Connecting);
+        client.open_connection(
+            ConnectionConfiguration::from_addrs(
+                SocketAddr::from_str(server_address.0.as_str()).unwrap(),
+                SocketAddr::from_str("0.0.0.0:0").unwrap()
+            ),
+            CertificateVerificationMode::SkipVerification
+        ).unwrap();
     }
 }
 
 fn in_game_on_connect(
-    client: Option<Res<RenetClient>>,
-    mut state: ResMut<State<AppState>>
+    mut connect_event: EventReader<ConnectionEvent>,
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
-    if let Some(client) = client {
-        if client.is_connected() {
-            state.set(AppState::InGame).unwrap();
-        }
+    if connect_event.iter().next().is_some() {
+        next_state.set(AppState::InGame);
     }
 }

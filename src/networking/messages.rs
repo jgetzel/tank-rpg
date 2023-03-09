@@ -7,16 +7,12 @@ use crate::object::ObjectId;
 pub type PlayerId = u64;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ReliableMessages {
+pub enum ServerMessage {
     PlayerConnected { player_id: PlayerId, object_id: ObjectId },
     PlayerDisconnected { player_id: PlayerId },
-    ObjectDespawn { object_id: ObjectId},
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum UnreliableMessages {
+    ObjectDespawn { object_id: ObjectId },
     PhysObjUpdate { objects: HashMap<ObjectId, PhysicsObjData> },
-    TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> }
+    TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> } //TODO find a better way
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -8,7 +8,7 @@ pub use utils::*;
 use bevy::app::App;
 pub use components::*;
 use bevy::math::Vec2;
-use bevy::prelude::{BuildChildren, Commands, Entity, IntoSystemDescriptor, Plugin};
+use bevy::prelude::{BuildChildren, Commands, Entity, IntoSystemConfig, Plugin};
 use crate::bullet::BulletSystemStage::CollisionHandle;
 use crate::networking::messages::PlayerId;
 use crate::object::ObjectId;

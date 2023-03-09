@@ -29,6 +29,7 @@ pub struct FontAssets {
 }
 
 impl FontAssets {
+    #[allow(dead_code)] // TODO Remove once fonts are used
     pub fn get(&self, font: FontEnum) -> Handle<Font> {
         self.map.get(&font).unwrap().clone()
     }

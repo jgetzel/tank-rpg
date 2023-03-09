@@ -1,5 +1,6 @@
 use std::default::Default;
 use std::env;
+use bevy::a11y::AccessibilityPlugin;
 use bevy::app::{App, Plugin, PluginGroupBuilder, ScheduleRunnerPlugin};
 use bevy::audio::AudioPlugin;
 use bevy::core_pipeline::CorePipelinePlugin;
@@ -12,7 +13,6 @@ use bevy::scene::ScenePlugin;
 use bevy::sprite::SpritePlugin;
 use bevy::text::TextPlugin;
 use bevy::time::TimePlugin;
-use bevy::ui::UiPlugin;
 use bevy::winit::WinitPlugin;
 use bevy_egui::EguiPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
@@ -70,9 +70,9 @@ impl Plugin for DefaultExecutablePlugin {
         app.insert_resource(Lobby::default())
             .insert_resource(SyncedObjects::default());
 
-        app.add_plugin(AssetLoaderPlugin)
+        app.add_plugin(TankScenePlugin)
             .add_plugin(NetworkPlugin)
-            .add_plugin(TankScenePlugin)
+            .add_plugin(AssetLoaderPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(BulletPlugin)
@@ -81,7 +81,6 @@ impl Plugin for DefaultExecutablePlugin {
 
         #[cfg(debug_assertions)]
         app
-            // .add_plugin(EditorPlugin)
             .register_type::<PlayerInput>();
     }
 }
@@ -91,7 +90,9 @@ struct BevyDefaultPlugins;
 impl PluginGroup for BevyDefaultPlugins {
     fn build(self) -> PluginGroupBuilder {
         let mut group = PluginGroupBuilder::start::<Self>()
-            .add(CorePlugin::default())
+            .add(TaskPoolPlugin::default())
+            .add(TypeRegistrationPlugin::default())
+            .add(FrameCountPlugin::default())
             .add(TimePlugin::default())
             .add(get_log_plugin())
             .add(TransformPlugin::default())
@@ -107,6 +108,7 @@ impl PluginGroup for BevyDefaultPlugins {
         } else {
             group = group.add(InputPlugin::default())
                 .add(WindowPlugin::default())
+                .add(AccessibilityPlugin)
                 .add(WinitPlugin::default())
                 .add(RenderPlugin::default())
                 .add(ImagePlugin::default())
@@ -137,18 +139,8 @@ fn get_log_plugin() -> LogPlugin {
     //
     // // this code is compiled only if debug assertions are disabled (release mode)
     // #[cfg(not(debug_assertions))]
-    return LogPlugin {
+    LogPlugin {
         level: bevy::log::Level::INFO,
         filter: "info,wgpu_core=warn,wgpu_hal=warn".into(),
-    };
-}
-
-fn get_window_plugin(title: &str) -> WindowPlugin {
-    WindowPlugin {
-        window: WindowDescriptor {
-            title: title.into(),
-            ..default()
-        },
-        ..default()
     }
 }

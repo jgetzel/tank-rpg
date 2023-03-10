@@ -9,7 +9,7 @@ use crate::networking::client::{ClientId, ClientMessage, YouConnectEvent};
 use crate::networking::messages::*;
 use crate::object::SyncedObjects;
 use crate::scenes::AppState;
-use crate::utils::CustomDespawnExt;
+use crate::utils::despawn::CustomDespawnExt;
 
 pub fn client_send(
     input: Res<PlayerInput>,

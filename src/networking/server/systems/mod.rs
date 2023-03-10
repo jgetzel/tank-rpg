@@ -24,7 +24,8 @@ use crate::object::ObjectId;
 use crate::object::components::Object;
 use crate::player::{Player, PlayerTurret, spawn_new_player};
 use crate::scenes::AppState;
-use crate::utils::CustomDespawnExt;
+use crate::utils::despawn::CustomDespawnExt;
+use crate::utils::TryInsertExt;
 
 pub fn server_recv(
     mut server: ResMut<Server>,
@@ -37,7 +38,7 @@ pub fn server_recv(
             match message {
                 ClientMessage::InputMessage { input } => {
                     if let Some(player_entity) = lobby.players.get(&client_id) {
-                        commands.entity(*player_entity).insert(input);
+                        commands.entity(*player_entity).try_insert(input);
                     }
                 }
             }

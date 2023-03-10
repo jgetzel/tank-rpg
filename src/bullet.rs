@@ -8,7 +8,7 @@ use crate::sprite_updater::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 use crate::player::{DeathEvent, Health};
-use crate::utils::CustomDespawnExt;
+use crate::utils::despawn::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;
@@ -20,8 +20,9 @@ pub struct BulletPlugin;
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<BulletCollisionEvent>()
-            .add_system(fire_bullet)
-            .add_system(bullet_decay)
+            .configure_set(CollisionSend.before(CollisionHandle))
+            .add_system(fire_bullet.before(CollisionSend))
+            .add_system(bullet_decay.after(fire_bullet))
             .add_system(bullet_collision_sender.in_set(CollisionSend))
             .add_system(bullet_collision_handler.in_set(CollisionHandle)
                 .after(CollisionSend));

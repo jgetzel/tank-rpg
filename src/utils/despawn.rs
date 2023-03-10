@@ -1,6 +1,7 @@
 use bevy::ecs::system::{Command, EntityCommands};
-use bevy::prelude::{Children, Entity, World};
+use bevy::prelude::{Entity, World};
 use bevy_quinnet::server::Server;
+use bevy::hierarchy::Children;
 use crate::networking::Lobby;
 use crate::networking::server::ObjectDespawnEvent;
 use crate::object::{Object, SyncedObjects};

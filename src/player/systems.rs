@@ -4,7 +4,7 @@ use bevy::math::{Quat, Vec3};
 use crate::player::components::PlayerInput;
 use crate::player::{DeathEvent, Player, PlayerTurret};
 use crate::player::utils::calc_player_next_velocity;
-use crate::utils::CustomDespawn;
+use crate::utils::CustomDespawnExt;
 
 pub fn player_move(
     mut query: Query<(&mut Velocity, &Player, &PlayerInput)>,

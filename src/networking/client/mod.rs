@@ -41,7 +41,7 @@ impl Plugin for ClientPlugin {
                     on_you_joined,
                     on_player_leave,
                     on_object_despawn,
-                    prediction_move,
+                    // prediction_move,
                 ).in_set(ClientUpdate)
             )
             .add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));

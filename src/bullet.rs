@@ -8,7 +8,7 @@ use crate::sprite_updater::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 use crate::player::{DeathEvent, Health};
-use crate::utils::CustomDespawn;
+use crate::utils::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;

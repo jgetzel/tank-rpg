@@ -1,18 +1,15 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, NextState, Query, Res, ResMut, With};
+use bevy::prelude::{Commands, EventReader, EventWriter, NextState, Res, ResMut};
 use bevy::log::info;
-use bevy::time::Time;
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
-use bevy_rapier2d::prelude::Velocity;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::{ClientId, ClientMessage, YouConnectEvent};
 use crate::networking::messages::*;
 use crate::object::SyncedObjects;
-use crate::player::{calc_player_next_velocity, Player, You};
 use crate::scenes::AppState;
-use crate::utils::CustomDespawn;
+use crate::utils::CustomDespawnExt;
 
 pub fn client_send(
     input: Res<PlayerInput>,
@@ -90,19 +87,10 @@ pub fn on_object_despawn(
     mut commands: Commands,
 ) {
     events.iter().for_each(|event| {
-        info!("Recieved despawn from server");
+        info!("Received despawn from server");
         if let Some(&ent) = objects.objects.get(&event.object_id) {
             commands.entity(ent).custom_despawn();
         }
-    });
-}
-
-pub fn prediction_move(
-    mut query: Query<(&mut Velocity, &Player, &PlayerInput), With<You>>,
-    time: Res<Time>,
-) {
-    query.iter_mut().for_each(|(mut vel, player, input)| {
-        vel.linvel = calc_player_next_velocity(vel.linvel, player, input, time.delta_seconds());
     });
 }
 

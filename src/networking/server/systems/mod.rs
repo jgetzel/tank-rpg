@@ -1,3 +1,5 @@
+pub mod ui;
+
 use bevy::prelude::{Children, Commands, Entity, EventReader, NextState, Query, Res, ResMut, Transform, With};
 use bevy::log::info;
 use std::mem::size_of;
@@ -13,15 +15,16 @@ use bevy_quinnet::shared::channel::ChannelId;
 use local_ip_address::local_ip;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::SpriteEnum;
-use crate::networking::Lobby;
+use crate::networking::{Lobby};
 use crate::networking::client::ClientMessage;
 use crate::networking::messages::{PhysicsObjData, ServerMessage};
-use crate::networking::server::SERVER_PORT;
+use crate::networking::server::{ObjectDespawnEvent, SERVER_PORT};
+use crate::networking::server::systems::ui::ServerVisualizer;
 use crate::object::ObjectId;
 use crate::object::components::Object;
 use crate::player::{Player, PlayerTurret, spawn_new_player};
 use crate::scenes::AppState;
-use crate::utils::CustomDespawn;
+use crate::utils::CustomDespawnExt;
 
 pub fn server_recv(
     mut server: ResMut<Server>,
@@ -109,15 +112,16 @@ pub fn server_start_listening(mut server: ResMut<Server>) {
     ).unwrap();
 }
 
-pub fn server_ip_display(
-    mut egui_ctx: EguiContexts,
+pub fn on_object_despawn(
+    mut despawn_event: EventReader<ObjectDespawnEvent>,
+    server: Res<Server>,
 ) {
-    egui::Window::new("Server IP")
-        .anchor(Align2([Align::Min, Align::Min]), [0., 0.])
-        .resizable(false)
-        .show(egui_ctx.ctx_mut(), |ui| {
-            ui.label(format!("{}:{}", local_ip().unwrap(), SERVER_PORT));
-        });
+    despawn_event.iter().for_each(|e| {
+        server.endpoint().broadcast_message_on(
+            ChannelId::UnorderedReliable,
+            ServerMessage::ObjectDespawn { object_id: e.id },
+        ).unwrap();
+    });
 }
 
 pub fn on_client_connect(
@@ -144,7 +148,7 @@ pub fn on_client_connect(
         server.endpoint().send_message_on(
             id,
             ChannelId::UnorderedReliable,
-            ServerMessage::YouConnected { player_id: id }
+            ServerMessage::YouConnected { player_id: id },
         ).unwrap();
 
         lobby.players.insert(id, new_player_entity);
@@ -175,4 +179,55 @@ pub fn on_client_disconnect(
             ServerMessage::PlayerDisconnected { player_id: id },
         ).unwrap();
     }
+}
+
+pub fn server_stats_egui(
+    mut egui_ctx: EguiContexts,
+    mut client_join: EventReader<ConnectionEvent>,
+    mut client_leave: EventReader<ConnectionLostEvent>,
+    visualizer: Option<ResMut<ServerVisualizer<512>>>,
+    mut _commands: Commands,
+    lobby: Res<Lobby>,
+    server: Res<Server>,
+) {
+    let Some(mut visualizer) = visualizer else {
+        _commands.insert_resource(ServerVisualizer::<512>::default());
+        return;
+    };
+
+    client_join.iter().for_each(|ConnectionEvent { id }| {
+        visualizer.add_client(*id);
+    });
+    client_leave.iter().for_each(|ConnectionLostEvent { id }| {
+        visualizer.remove_client(*id);
+    });
+
+    visualizer.update(&server);
+
+    egui::Window::new("Server Stats")
+        .anchor(Align2([Align::Min, Align::Min]), [0., 0.])
+        .collapsible(true)
+        .resizable(true)
+        .show(egui_ctx.ctx_mut(), |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Server IP:");
+                let server_ip = format!("{}:{}", local_ip().unwrap(), SERVER_PORT);
+                ui.monospace(server_ip.clone());
+                if ui.small_button("📋").clicked() {
+                    ui.output_mut(|o| o.copied_text = server_ip);
+                }
+            });
+
+            ui.separator();
+
+            ui.label("Player Lobby");
+            ui.group(|ui| {
+                lobby.players.iter().for_each(|player| {
+                    ui.label(format!("Player {}: Entity {:?}", player.0, player.1.clone()));
+                });
+            });
+
+            ui.separator();
+            visualizer.show_window(ui);
+        });
 }

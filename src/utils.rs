@@ -1,38 +1,56 @@
-use bevy::ecs::system::EntityCommands;
-use bevy::prelude::{DespawnRecursiveExt, World};
+use bevy::ecs::system::{Command, EntityCommands};
+use bevy::prelude::{Children, Entity, World};
 use bevy_quinnet::server::Server;
-use bevy_quinnet::shared::channel::ChannelId;
 use crate::networking::Lobby;
-use crate::networking::messages::ServerMessage;
+use crate::networking::server::ObjectDespawnEvent;
 use crate::object::{Object, SyncedObjects};
+use crate::player::Player;
 
-pub trait CustomDespawn {
+pub trait CustomDespawnExt {
     fn custom_despawn(self);
 }
 
-impl<'w, 's, 'a> CustomDespawn for EntityCommands<'w, 's, 'a> {
+struct CustomDespawn {
+    pub entity: Entity,
+}
+
+impl Command for CustomDespawn {
+    fn write(self, world: &mut World) {
+        custom_despawn(world, self.entity);
+    }
+}
+
+fn custom_despawn(world: &mut World, entity: Entity) {
+
+    if let Some(player) = world.get::<Player>(entity) {
+        let player = player.clone();
+        let mut lobby = world.get_resource_mut::<Lobby>().unwrap();
+        lobby.players.remove(&player.id);
+    }
+
+    if let Some(&object) = world.get::<Object>(entity) {
+        let mut objects = world.get_resource_mut::<SyncedObjects>().unwrap();
+        objects.objects.remove(&object.id);
+
+        if world.get_resource::<Server>().is_some() {
+            world.send_event::<ObjectDespawnEvent>(ObjectDespawnEvent { id: object.id });
+        }
+    }
+
+    if let Some(children) = world.get::<Children>(entity) {
+        let children: Vec<Entity> = children.iter().copied().collect();
+        for child in children {
+            custom_despawn(world, child);
+        }
+    }
+
+    world.despawn(entity);
+}
+
+
+impl<'w, 's, 'a> CustomDespawnExt for EntityCommands<'w, 's, 'a> {
     fn custom_despawn(mut self) {
         let entity = self.id();
-
-        self.commands().add(move |world: &mut World| {
-            let mut lobby = world.get_resource_mut::<Lobby>().unwrap();
-            if let Some((&player_id, _)) = lobby.players.iter().find(|&(_, &ent)| ent == entity) {
-                lobby.players.remove(&player_id);
-            }
-
-            if let Some(&object) = world.get::<Object>(entity) {
-                let mut objects = world.get_resource_mut::<SyncedObjects>().unwrap();
-                objects.objects.remove(&object.id);
-
-                if let Some(server) = world.get_resource::<Server>() {
-                    server.endpoint().broadcast_message_on(
-                        ChannelId::UnorderedReliable,
-                        ServerMessage::ObjectDespawn { object_id: object.id }
-                    ).unwrap();
-                }
-            }
-        });
-
-        self.commands().entity(entity).despawn_recursive();
+        self.commands().add(CustomDespawn { entity });
     }
 }

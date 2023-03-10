@@ -8,14 +8,14 @@ use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
 use bevy_egui::{egui, EguiContexts};
-use bevy_egui::egui::{Align, Align2};
+use bevy_egui::egui::{Align2};
 use bevy_quinnet::server::{ConnectionEvent, ConnectionLostEvent, Server, ServerConfiguration};
 use bevy_quinnet::server::certificate::CertificateRetrievalMode;
 use bevy_quinnet::shared::channel::ChannelId;
 use local_ip_address::local_ip;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::SpriteEnum;
-use crate::networking::{Lobby};
+use crate::networking::{Lobby, PlayerData};
 use crate::networking::client::ClientMessage;
 use crate::networking::messages::{PhysicsObjData, ServerMessage};
 use crate::networking::server::{ObjectDespawnEvent, SERVER_PORT};
@@ -37,8 +37,8 @@ pub fn server_recv(
         while let Some(message) = endpoint.receive_message_from::<ClientMessage>(client_id).unwrap() {
             match message {
                 ClientMessage::InputMessage { input } => {
-                    if let Some(player_entity) = lobby.players.get(&client_id) {
-                        commands.entity(*player_entity).try_insert(input);
+                    if let Some(player_entity) = lobby.get_entity(&client_id) {
+                        commands.entity(player_entity).try_insert(input);
                     }
                 }
             }
@@ -137,13 +137,16 @@ pub fn on_client_connect(
         let new_player_entity: Entity = spawn_new_player(&mut commands, id, None);
         let new_object = Object::new();
         commands.entity(new_player_entity).insert(new_object);
-        for (&player_id, &player) in lobby.players.iter() {
-            let object_id = objects.get_mut(player).unwrap().id;
-            server.endpoint().send_message_on(
-                id,
-                ChannelId::UnorderedReliable,
-                ServerMessage::PlayerConnected { player_id, object_id },
-            ).unwrap();
+        for (&player_id, data) in lobby.player_data.iter() {
+            if let Some(entity) = data.entity {
+                let object_id = objects.get_mut(entity).unwrap().id;
+                server.endpoint().send_message_on(
+                    id,
+                    ChannelId::UnorderedReliable,
+                    ServerMessage::PlayerConnected { player_id, object_id },
+                ).unwrap();
+
+            }
         }
 
         server.endpoint().send_message_on(
@@ -152,7 +155,9 @@ pub fn on_client_connect(
             ServerMessage::YouConnected { player_id: id },
         ).unwrap();
 
-        lobby.players.insert(id, new_player_entity);
+        lobby.player_data.insert(id, PlayerData {
+            entity: Some(new_player_entity)
+        });
 
         server.endpoint().broadcast_message_on(
             ChannelId::UnorderedReliable,
@@ -171,8 +176,10 @@ pub fn on_client_disconnect(
 ) {
     for &ConnectionLostEvent { id } in lost_connect_events.iter() {
         info!("Player {id} Disconnected");
-        if let Some(player_entity) = lobby.players.remove(&id) {
-            commands.entity(player_entity).custom_despawn();
+        if let Some(data) = lobby.player_data.remove(&id) {
+            if let Some(entity) = data.entity {
+                commands.entity(entity).custom_despawn();
+            }
         }
 
         server.endpoint().broadcast_message_on(
@@ -206,7 +213,7 @@ pub fn server_stats_egui(
     visualizer.update(&server);
 
     egui::Window::new("Server Stats")
-        .anchor(Align2([Align::Min, Align::Min]), [0., 0.])
+        .anchor(Align2::LEFT_TOP, [0., 0.])
         .collapsible(true)
         .resizable(true)
         .show(egui_ctx.ctx_mut(), |ui| {
@@ -223,7 +230,7 @@ pub fn server_stats_egui(
 
             ui.label("Player Lobby");
             ui.group(|ui| {
-                lobby.players.iter().for_each(|player| {
+                lobby.player_data.iter().for_each(|player| {
                     ui.label(format!("Player {}: Entity {:?}", player.0, player.1.clone()));
                 });
             });

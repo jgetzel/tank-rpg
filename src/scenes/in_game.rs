@@ -2,7 +2,7 @@ use bevy::app::App;
 use bevy::prelude::{Commands, EventReader, EventWriter, IntoSystemAppConfig, IntoSystemConfig, OnEnter, OnUpdate, Plugin, ResMut};
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
-use crate::networking::{Lobby, PlayerConnectEvent};
+use crate::networking::{Lobby, PlayerConnectEvent, PlayerData};
 use crate::object::{Object, SyncedObjects};
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::player::PlayerSpawnEvent;
@@ -49,7 +49,9 @@ fn player_connect_listener(
                 p.spawn(get_turret_bundle());
             }).id();
 
-        lobby.players.insert(ev.player_id, player_entity);
+        lobby.insert_data(ev.player_id, PlayerData {
+            entity: Some(player_entity)
+        }).unwrap();
         spawn_ev_w.send(PlayerSpawnEvent { player_id: ev.player_id, object_id: ev.object_id });
     });
 }

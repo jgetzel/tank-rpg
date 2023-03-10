@@ -4,7 +4,7 @@ use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
-use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerLeaveEvent, TurretUpdateEvent};
+use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerData, PlayerLeaveEvent, TurretUpdateEvent};
 use crate::networking::client::{ClientId, ClientMessage, YouConnectEvent};
 use crate::networking::messages::*;
 use crate::object::SyncedObjects;
@@ -75,8 +75,8 @@ pub fn on_player_leave(
 ) {
     for ev in leave_events.iter() {
         info!("Player {} Disconnected", ev.player_id);
-        if let Some(player_entity) = lobby.players.remove(&ev.player_id) {
-            commands.entity(player_entity).custom_despawn();
+        if let Some(PlayerData { entity: Some(entity) }) = lobby.player_data.remove(&ev.player_id) {
+            commands.entity(entity).custom_despawn();
         }
     }
 }

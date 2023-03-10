@@ -50,9 +50,11 @@ fn you_tag_adder(
     if let Some(client) = client {
         for ev in spawn_event.iter() {
             if ev.player_id == client.0 {
-                if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
-                    commands.entity(player_entity).insert(You);
-                    debug!("'You' tag added for Player {}", ev.player_id);
+                if let Some(player_data) = lobby.player_data.get(&ev.player_id) {
+                    if let Some(entity) = player_data.entity {
+                        commands.entity(entity).insert(You);
+                        debug!("'You' tag added for Player {}", ev.player_id);
+                    }
                 }
             }
         }

@@ -12,6 +12,7 @@ use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::client::ClientSet::*;
 use crate::networking::client::main_menu::MainMenuPlugin;
 use crate::networking::client::systems::*;
+use crate::networking::messages::PlayerId;
 use crate::object::ObjectSyncPlugin;
 use crate::scenes::AppState;
 
@@ -25,6 +26,7 @@ impl Plugin for ClientPlugin {
             .add_plugin(ClientInputPlugin);
 
         app
+            .add_event::<YouConnectEvent>()
             .configure_set(ClientReceive.before(ClientUpdate).run_if(is_client_connected))
             .configure_set(ClientUpdate.before(ClientSend).run_if(is_client_connected))
             .configure_set(ClientSend.run_if(is_client_connected))
@@ -36,14 +38,22 @@ impl Plugin for ClientPlugin {
             )
             .add_systems(
                 (
+                    on_you_joined,
                     on_player_leave,
                     on_object_despawn,
                     prediction_move,
-                    ).in_set(ClientUpdate)
+                ).in_set(ClientUpdate)
             )
             .add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
     }
 }
+
+pub struct YouConnectEvent {
+    pub player_id: PlayerId,
+}
+
+#[derive(Resource)]
+pub struct ClientId(pub PlayerId);
 
 #[allow(clippy::enum_variant_names)]
 #[derive(SystemSet, Clone, Hash, Eq, PartialEq, Debug)]
@@ -63,8 +73,7 @@ pub enum ClientMessage {
 fn is_client_connected(client: Res<Client>) -> bool {
     if let Some(connection) = client.get_connection() {
         connection.is_connected()
-    }
-    else {
+    } else {
         false
     }
 }

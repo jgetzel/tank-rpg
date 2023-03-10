@@ -8,6 +8,7 @@ pub type PlayerId = u64;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessage {
+    YouConnected { player_id: PlayerId },
     PlayerConnected { player_id: PlayerId, object_id: ObjectId },
     PlayerDisconnected { player_id: PlayerId },
     ObjectDespawn { object_id: ObjectId },

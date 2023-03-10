@@ -141,6 +141,12 @@ pub fn on_client_connect(
             ).unwrap();
         }
 
+        server.endpoint().send_message_on(
+            id,
+            ChannelId::UnorderedReliable,
+            ServerMessage::YouConnected { player_id: id }
+        ).unwrap();
+
         lobby.players.insert(id, new_player_entity);
 
         server.endpoint().broadcast_message_on(

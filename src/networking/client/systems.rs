@@ -48,8 +48,8 @@ pub fn client_recv(
             ServerMessage::PlayerDisconnected { player_id } => {
                 leave_event.send(RecvPlayerLeaveEvent { player_id });
             }
-            ServerMessage::PlayerSpawn { player_id, object_id } => {
-                spawn_event.send(RecvPlayerSpawnEvent { player_id, object_id });
+            ServerMessage::PlayerSpawn { player_id, object_id, position } => {
+                spawn_event.send(RecvPlayerSpawnEvent { player_id, object_id, position });
             }
             ServerMessage::ObjectDespawn { object_id } => {
                 despawn_event.send(RecvObjectDespawnEvent { object_id });
@@ -120,7 +120,7 @@ pub fn on_player_spawn(
             }
         };
 
-        commands.entity(entity).insert(get_player_bundle(e.player_id, None))
+        commands.entity(entity).insert(get_player_bundle(e.player_id, Some(e.position)))
             .insert(Object { id: e.object_id })
             .with_children(|p| {
                 p.spawn(get_turret_bundle());
@@ -134,7 +134,8 @@ pub fn on_player_spawn(
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id: e.player_id,
-            object_id: e.object_id
+            object_id: e.object_id,
+            position: e.position
         });
     });
 }

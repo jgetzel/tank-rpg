@@ -70,6 +70,7 @@ pub struct RecvPlayerLeaveEvent {
 pub struct RecvPlayerSpawnEvent {
     pub player_id: PlayerId,
     pub object_id: ObjectId,
+    pub position: Vec2,
 }
 
 pub struct RecvObjectDespawnEvent {

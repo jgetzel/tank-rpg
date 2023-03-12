@@ -58,6 +58,7 @@ pub fn spawn_player_system(
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id,
             object_id: new_object.id,
+            position: spawn_position,
         })
     });
 }

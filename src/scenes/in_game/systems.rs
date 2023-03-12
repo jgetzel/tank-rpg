@@ -1,24 +1,30 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, Query, Res, ResMut};
+use bevy::prelude::{Commands, EventReader, EventWriter, GlobalTransform, Query, Res, ResMut, With};
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use bevy::time::Time;
-use crate::networking::{Lobby};
+use crate::networking::Lobby;
 use crate::networking::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::object::{Object, SyncedObjects};
-use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::player::{DeathEvent, Player};
-use crate::prefabs::{default_background, default_camera};
-use crate::scenes::in_game::{OnRespawnTimerFinish, RespawnTimer};
+use crate::prefabs::{default_background, default_camera, get_player_bundle, get_turret_bundle, spawn_point};
+use crate::scenes::in_game::{OnRespawnTimerFinish, RespawnTimer, SpawnPoint};
 
 pub fn init_default(mut commands: Commands) {
     commands.spawn(default_background());
     commands.spawn(default_camera());
+    commands.spawn(spawn_point([-500.0, 0.].into()));
+    commands.spawn(spawn_point([500.0, 0.].into()));
+    commands.spawn(spawn_point([0., -500.0].into()));
+    commands.spawn(spawn_point([0., 500.0].into()));
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_player_system(
     mut join_events: EventReader<OnPlayerConnectEvent>,
     mut respawn_events: EventReader<OnRespawnTimerFinish>,
     mut spawn_writer: EventWriter<OnPlayerSpawnEvent>,
+    spawn_points: Query<&GlobalTransform, With<SpawnPoint>>,
+    players: Query<&GlobalTransform, With<Player>>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut objects: ResMut<SyncedObjects>,
@@ -28,9 +34,18 @@ pub fn spawn_player_system(
     events.for_each(|player_id| {
         info!("Player {} Spawned", player_id);
 
+        let spawn_position = spawn_points.iter().map(|spawn_trans| {
+            let spawn_trunc = spawn_trans.translation().truncate();
+            (players.iter().map(|player_trans|
+                (spawn_trunc - player_trans.translation().truncate()).length())
+                 .sum::<f32>(),
+             spawn_trunc)
+        }).max_by(|(x, _), (y, _)| x.total_cmp(y)).unwrap().1;
+
         let new_object = Object::new();
 
-        let player_entity = commands.spawn(get_player_bundle(player_id, None))
+        let player_entity = commands.spawn(
+            get_player_bundle(player_id, Some(spawn_position)))
             .insert(new_object)
             .with_children(|p| {
                 p.spawn(get_turret_bundle());

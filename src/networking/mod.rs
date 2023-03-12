@@ -59,12 +59,15 @@ fn is_server_listening(server: Option<Res<Server>>) -> bool {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PlayerData {
     pub object_id: Option<ObjectId>,
+    pub kills: u32,
+    pub deaths: u32,
 }
 
 impl PlayerData {
     pub fn new(object_id: ObjectId) -> Self {
         PlayerData {
             object_id: Some(object_id),
+            ..default()
         }
     }
 }

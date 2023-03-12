@@ -1,6 +1,8 @@
 mod systems;
 mod client_input;
 mod main_menu;
+mod debug_ui;
+mod leaderboard_ui;
 
 pub use crate::player::components::PlayerInput;
 
@@ -10,6 +12,8 @@ use bevy_quinnet::client::{QuinnetClientPlugin};
 use serde::{Deserialize, Serialize};
 use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::client::ClientSet::*;
+use crate::networking::client::debug_ui::ClientDebugUI;
+use crate::networking::client::leaderboard_ui::ClientLeaderboardUI;
 use crate::networking::client::main_menu::MainMenuPlugin;
 use crate::networking::client::systems::*;
 use crate::networking::messages::{PhysicsObjData, PlayerId};
@@ -49,8 +53,12 @@ impl Plugin for ClientPlugin {
                 ).in_set(ClientUpdate).before(on_object_despawn)
             )
             .add_system(on_object_despawn.in_set(ClientUpdate))
-            .add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)))
-            .add_system(show_player_lobby.run_if(in_state(AppState::InGame)));
+            .add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
+
+        #[cfg(debug_assertions)]
+        app.add_plugin(ClientDebugUI);
+
+        app.add_plugin(ClientLeaderboardUI);
     }
 }
 

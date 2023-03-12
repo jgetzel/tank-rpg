@@ -73,3 +73,20 @@ impl PlayerData {
 pub struct Lobby {
     pub player_data: HashMap<PlayerId, PlayerData>,
 }
+
+impl Lobby {
+    pub fn update_object_id(&mut self, player_id: PlayerId, object_id: ObjectId) -> Result<(), String> {
+        if let Some(mut data) = self.player_data.get_mut(&player_id) {
+            if data.object_id.is_some() {
+                return Err(format!("Attempted to update object ID for Player {}, \
+                but they were already connected to another object!", player_id));
+            }
+            data.object_id = Some(object_id);
+            Ok(())
+        }
+        else {
+            self.player_data.insert(player_id, PlayerData::new(object_id));
+            Ok(())
+        }
+    }
+}

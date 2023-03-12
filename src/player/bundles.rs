@@ -5,7 +5,6 @@ use bevy::sprite::{Anchor, Sprite};
 use bevy_rapier2d::dynamics::{Damping, LockedAxes, RigidBody, Velocity};
 use bevy_rapier2d::geometry::Collider;
 use crate::asset_loader::components::SpriteEnum;
-use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 use crate::player::Health;
 use crate::sprite_updater::{PLAYER_LAYER, TURRET_LAYER};
@@ -23,7 +22,6 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
     (
         Name::from(format!("Player {id}")),
         Player::new(id),
-        Object::new(),
         Health::default(),
         SpriteEnum::TankGray,
         SpatialBundle {

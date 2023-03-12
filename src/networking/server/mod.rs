@@ -4,6 +4,8 @@ use bevy::app::{App, Plugin};
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_quinnet::server::QuinnetServerPlugin;
+use crate::networking::is_server_listening;
+use crate::networking::server::ServerSet::*;
 use crate::networking::server::systems::*;
 use crate::scenes::AppState;
 
@@ -16,18 +18,27 @@ impl Plugin for ServerPlugin {
         app.add_plugin(QuinnetServerPlugin::default())
             .add_system(in_game_on_load.in_set(OnUpdate(AppState::Loading)))
             .add_system(server_start_listening.in_schedule(OnEnter(AppState::InGame)))
+            .add_system(server_recv.in_set(ServerReceive))
             .add_systems(
                 (
-                    server_recv,
                     server_send_phys_obj,
                     server_send_turrets,
                     on_client_connect,
                     on_client_disconnect,
-                ).in_set(OnUpdate(AppState::InGame))
-            );
+                    on_player_spawn,
+                ).in_set(ServerSend).before(on_object_despawn))
+            .add_system(on_object_despawn.in_set(ServerSend));
 
         if app.is_plugin_added::<EguiPlugin>() {
-            app.add_system(server_ip_display);
+            app.add_system(server_stats_egui.run_if(is_server_listening));
         }
     }
+}
+
+#[allow(clippy::enum_variant_names)]
+#[derive(SystemSet, Clone, Hash, Eq, PartialEq, Debug)]
+pub enum ServerSet {
+    ServerReceive,
+    ServerUpdate,
+    ServerSend,
 }

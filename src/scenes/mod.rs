@@ -1,9 +1,9 @@
-mod in_game;
+pub mod in_game;
 
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Commands, States, World};
 use bevy::window::Window;
-use crate::utils::CustomDespawn;
+use crate::utils::despawn::CustomDespawnExt;
 
 #[derive(States, Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
 pub enum AppState {

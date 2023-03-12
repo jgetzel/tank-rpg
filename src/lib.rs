@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use std::default::Default;
 use std::env;
 use bevy::a11y::AccessibilityPlugin;
@@ -21,7 +23,7 @@ use crate::asset_loader::AssetLoaderPlugin;
 use crate::bullet::BulletPlugin;
 use crate::camera::GameCameraPlugin;
 use crate::networking::client::ClientPlugin;
-use crate::networking::{Lobby, NetworkPlugin};
+use crate::networking::{Lobby, NetworkingPlugin};
 use crate::networking::server::ServerPlugin;
 use crate::object::SyncedObjects;
 use crate::physics::PhysicsPlugin;
@@ -71,7 +73,7 @@ impl Plugin for DefaultExecutablePlugin {
             .insert_resource(SyncedObjects::default());
 
         app.add_plugin(TankScenePlugin)
-            .add_plugin(NetworkPlugin)
+            .add_plugin(NetworkingPlugin)
             .add_plugin(AssetLoaderPlugin)
             .add_plugin(GameCameraPlugin)
             .add_plugin(PlayerPlugin)

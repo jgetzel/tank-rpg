@@ -1,6 +1,7 @@
 use bevy::prelude::{Component, Entity, Reflect, Resource};
 use bevy::math::Vec2;
 use serde::{Deserialize, Serialize};
+use crate::networking::messages::PlayerId;
 
 #[derive(Component)]
 pub struct You;
@@ -24,7 +25,7 @@ impl Default for Health {
 
 #[derive(Component, Clone)]
 pub struct Player {
-    pub id: u64,
+    pub id: PlayerId,
     pub accel: f32,
     pub max_speed: f32,
     pub friction: f32,

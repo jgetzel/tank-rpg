@@ -1,50 +1,75 @@
 pub mod server;
 pub mod client;
 pub mod messages;
+pub mod events;
 
 use std::collections::HashMap;
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Entity, Quat, Resource};
-use crate::networking::messages::{PhysicsObjData, PlayerId};
+use bevy::prelude::*;
+use bevy_quinnet::client::Client;
+use bevy_quinnet::server::Server;
+use serde::{Deserialize, Serialize};
+use crate::networking::messages::PlayerId;
+use crate::networking::client::ClientSet::*;
+use crate::networking::events::*;
+use crate::networking::server::ServerSet::*;
 use crate::object::ObjectId;
 
-pub struct NetworkPlugin;
+pub struct NetworkingPlugin;
 
-impl Plugin for NetworkPlugin {
+impl Plugin for NetworkingPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(Lobby::default());
-        app.add_event::<PlayerConnectEvent>()
-            .add_event::<PlayerLeaveEvent>()
-            .add_event::<ObjectDespawnEvent>()
-            .add_event::<PhysObjUpdateEvent>()
-            .add_event::<TurretUpdateEvent>();
+        app
+            .configure_set(ServerUpdate.in_base_set(CoreSet::Update))
+            .configure_set(ServerReceive.before(ServerUpdate)
+                .run_if(is_server_listening))
+            .configure_set(ServerUpdate.before(ServerSend)
+                .run_if(is_server_listening))
+            .configure_set(ServerSend
+                .run_if(is_server_listening))
+            .configure_set(ClientReceive.before(ClientUpdate).run_if(is_client_connected))
+            .configure_set(ClientUpdate.before(ClientSend).run_if(is_client_connected))
+            .configure_set(ClientSend.run_if(is_client_connected));
+
+        app
+            .add_event::<OnObjectDespawnEvent>()
+            .add_event::<OnPlayerSpawnEvent>()
+            .add_event::<OnPlayerConnectEvent>();
+    }
+}
+
+pub fn is_client_exe(client: Option<Res<Client>>) -> bool {
+    client.is_some()
+}
+
+fn is_client_connected(client: Option<Res<Client>>) -> bool {
+    if let Some(client) = client && let Some(connection) = client.get_connection() {
+        connection.is_connected()
+    }
+    else { false }
+}
+
+fn is_server_listening(server: Option<Res<Server>>) -> bool {
+    if let Some(server) = server {
+        server.is_listening()
+    }
+    else { false }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PlayerData {
+    pub object_id: Option<ObjectId>,
+}
+
+impl PlayerData {
+    pub fn new(object_id: ObjectId) -> Self {
+        PlayerData {
+            object_id: Some(object_id),
+        }
     }
 }
 
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
-    pub players: HashMap<PlayerId, Entity>,
-}
-
-pub struct PlayerConnectEvent {
-    pub player_id: PlayerId,
-    pub object_id: ObjectId
-}
-
-pub struct PlayerLeaveEvent {
-    pub player_id: PlayerId,
-}
-
-pub struct ObjectDespawnEvent {
-    pub object_id: ObjectId
-}
-
-pub struct PhysObjUpdateEvent {
-    pub id: ObjectId,
-    pub data: PhysicsObjData
-}
-
-pub struct TurretUpdateEvent {
-    pub parent_id: ObjectId,
-    pub rotation: Quat,
+    pub player_data: HashMap<PlayerId, PlayerData>,
 }

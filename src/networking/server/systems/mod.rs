@@ -21,7 +21,7 @@ use crate::networking::messages::{PhysicsObjData, ServerMessage};
 use crate::networking::server::SERVER_PORT;
 use crate::networking::server::events::{OnObjectDespawnEvent, OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::networking::server::systems::ui::ServerVisualizer;
-use crate::object::ObjectId;
+use crate::object::{ObjectId, SyncedObjects};
 use crate::object::components::Object;
 use crate::player::{Player, PlayerTurret};
 use crate::scenes::AppState;
@@ -32,14 +32,18 @@ pub fn server_recv(
     mut server: ResMut<Server>,
     mut commands: Commands,
     lobby: Res<Lobby>,
+    objects: Res<SyncedObjects>
 ) {
     let endpoint = server.endpoint_mut();
     for client_id in endpoint.clients().into_iter() {
         while let Some(message) = endpoint.receive_message_from::<ClientMessage>(client_id).unwrap() {
             match message {
                 ClientMessage::InputMessage { input } => {
-                    if let Some(player_entity) = lobby.get_entity(&client_id) {
-                        commands.entity(player_entity).try_insert(input);
+                    if let Some(data) = lobby.player_data.get(&client_id) &&
+                        let Some(object_id) = data.object_id &&
+                        let Some(&entity) = objects.objects.get(&object_id) {
+
+                        commands.entity(entity).try_insert(input);
                     }
                 }
             }
@@ -154,6 +158,14 @@ pub fn on_client_connect(
                 ChannelId::UnorderedReliable,
                 ServerMessage::PlayerConnected { player_id, data: data.clone() },
             ).unwrap();
+
+            if let Some(object_id) = data.object_id {
+                server.endpoint().send_message_on(
+                    id,
+                    ChannelId::UnorderedReliable,
+                    ServerMessage::PlayerSpawn { player_id, object_id },
+                ).unwrap();
+            }
         }
 
         lobby.player_data.insert(id, PlayerData::default());
@@ -168,14 +180,16 @@ pub fn on_client_disconnect(
     mut lost_connect_events: EventReader<ConnectionLostEvent>,
     mut commands: Commands,
     server: Res<Server>,
-    mut lobby: ResMut<Lobby>,
+    lobby: Res<Lobby>,
+    objects: Res<SyncedObjects>,
 ) {
     for &ConnectionLostEvent { id } in lost_connect_events.iter() {
         info!("Player {id} Disconnected");
-        if let Some(data) = lobby.player_data.remove(&id) {
-            if let Some(entity) = data.entity {
-                commands.entity(entity).custom_despawn();
-            }
+        if let Some(data) = lobby.player_data.get(&id) &&
+            let Some(object_id) = data.object_id &&
+            let Some(&entity) = objects.objects.get(&object_id)
+        {
+            commands.entity(entity).custom_despawn();
         }
 
         server.endpoint().broadcast_message_on(

@@ -2,7 +2,7 @@ use bevy::prelude::{Commands, Entity, EventReader, EventWriter, Query, Res, ResM
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use bevy::time::Time;
-use crate::networking::Lobby;
+use crate::networking::{Lobby, PlayerData};
 use crate::networking::server::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::object::{Object, SyncedObjects};
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
@@ -35,7 +35,7 @@ pub fn on_connect_spawn_player(
 
         objects.objects.insert(new_object.id, player_entity);
 
-        lobby.insert_entity(ev.player_id, player_entity).unwrap();
+        lobby.player_data.insert(ev.player_id, PlayerData::new(new_object.id));
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id: ev.player_id,
@@ -90,7 +90,7 @@ pub fn respawn_reader(
         let new_player_entity: Entity = spawn_new_player(&mut commands, *player_id, None);
         let new_object = Object::new();
         commands.entity(new_player_entity).insert(new_object);
-        lobby.insert_entity( *player_id, new_player_entity).unwrap();
+        lobby.player_data.insert(*player_id, PlayerData::new(new_object.id));
 
         spawn_event_writer.send(OnPlayerSpawnEvent {
             player_id: *player_id,

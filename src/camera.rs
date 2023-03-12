@@ -4,11 +4,12 @@ use bevy::prelude::{Camera, Commands, Component, debug, EventReader, IntoSystemC
 use bevy::time::Time;
 use serde::{Deserialize, Serialize};
 use crate::sprite_updater::CAMERA_LAYER;
-use crate::networking::{is_client_exe, Lobby};
+use crate::networking::{is_client_exe};
 use crate::networking::client::ClientId;
-use crate::networking::client::ClientSet::ClientReceive;
+use crate::networking::client::ClientSet::{ClientReceive};
 use crate::player::components::You;
 use crate::networking::client::RecvPlayerSpawnEvent;
+use crate::object::SyncedObjects;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -45,17 +46,15 @@ fn you_tag_adder(
     mut spawn_event: EventReader<RecvPlayerSpawnEvent>,
     mut commands: Commands,
     client: Option<Res<ClientId>>,
-    lobby: Res<Lobby>,
+    objects: Res<SyncedObjects>,
 ) {
     if let Some(client) = client {
         for ev in spawn_event.iter() {
-            if ev.player_id == client.0 {
-                if let Some(player_data) = lobby.player_data.get(&ev.player_id) {
-                    if let Some(entity) = player_data.entity {
-                        commands.entity(entity).insert(You);
-                        debug!("'You' tag added for Player {}", ev.player_id);
-                    }
-                }
+            if ev.player_id == client.0 &&
+                let Some(&entity) = objects.objects.get(&ev.object_id) {
+
+                commands.entity(entity).insert(You);
+                debug!("'You' tag added for Player {}", ev.player_id);
             }
         }
     }

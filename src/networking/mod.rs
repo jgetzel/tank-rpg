@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::networking::messages::PlayerId;
 use crate::networking::client::ClientSet::*;
 use crate::networking::server::ServerSet::*;
+use crate::object::ObjectId;
 
 pub struct NetworkingPlugin;
 
@@ -48,55 +49,20 @@ fn is_server_listening(server: Option<Res<Server>>) -> bool {
     else { false }
 }
 
-// TODO Have object ID in PlayerData instead of Entity
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PlayerData {
-    pub entity: Option<Entity>,
+    pub object_id: Option<ObjectId>,
+}
+
+impl PlayerData {
+    pub fn new(object_id: ObjectId) -> Self {
+        PlayerData {
+            object_id: Some(object_id),
+        }
+    }
 }
 
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
     pub player_data: HashMap<PlayerId, PlayerData>,
-}
-
-impl Lobby {
-    pub fn get_entity(&self, id: &PlayerId) -> Option<Entity> {
-        if let Some(data) = self.player_data.get(id) {
-            data.entity
-        } else { None }
-    }
-
-    pub fn insert_data(&mut self, id: PlayerId, data: PlayerData) -> Result<(), &'static str> {
-        let old_data = self.player_data.insert(id, data);
-
-        if let Some(PlayerData { entity }) = old_data {
-            if entity.is_some() {
-                return Err("Tried to insert new player data when old data still has entity assigned!");
-            }
-        }
-
-        Ok(())
-    }
-
-    pub fn insert_entity(&mut self, id: PlayerId, entity: Entity) -> Result<(), &'static str> {
-        let data = self.player_data.get_mut(&id);
-        match data {
-            Some(data) => {
-                if data.entity.is_some() {
-                    return Err("Player Entity already exists!");
-                }
-                data.entity = Some(entity);
-                Ok(())
-            }
-            None => {
-                Err("No player data to insert entity into!")
-            }
-        }
-    }
-
-    pub fn remove_entity(&mut self, id: &PlayerId) {
-        if let Some(mut data) = self.player_data.get_mut(id) {
-            data.entity = None;
-        }
-    }
 }

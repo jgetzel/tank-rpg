@@ -27,7 +27,9 @@ fn custom_despawn(world: &mut World, entity: Entity) {
         let player = player.clone();
         let mut lobby = world.get_resource_mut::<Lobby>().unwrap();
         info!("Removing player from lobby: {}", {player.id});
-        lobby.remove_entity(&player.id);
+        if let Some(mut data) = lobby.player_data.get_mut(&player.id) {
+            data.object_id = None;
+        }
     }
 
     if let Some(&object) = world.get::<Object>(entity) {

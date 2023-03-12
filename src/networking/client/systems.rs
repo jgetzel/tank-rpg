@@ -10,7 +10,6 @@ use crate::networking::client::{ClientId, ClientMessage, RecvObjectDespawnEvent,
 use crate::networking::messages::*;
 use crate::object::{Object, SyncedObjects};
 use crate::networking::client::RecvPlayerSpawnEvent;
-use crate::networking::server::events::OnPlayerSpawnEvent;
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
@@ -83,20 +82,21 @@ pub fn on_player_join(
 ) {
     join_ev.iter().for_each(|ev| {
         info!("Player {} Connected", ev.player_id);
-        let mut data = ev.data.clone();
-        data.entity = None;
-        lobby.insert_data(ev.player_id, data).unwrap();
+        lobby.player_data.insert(ev.player_id, ev.data.clone());
     });
 }
 
 pub fn on_player_leave(
     mut leave_events: EventReader<RecvPlayerLeaveEvent>,
     mut commands: Commands,
-    mut lobby: ResMut<Lobby>,
+    lobby: ResMut<Lobby>,
+    objects: ResMut<SyncedObjects>,
 ) {
     for ev in leave_events.iter() {
         info!("Player {} Disconnected", ev.player_id);
-        if let Some(PlayerData { entity: Some(entity) }) = lobby.player_data.remove(&ev.player_id) {
+        if let Some(data) = lobby.player_data.get(&ev.player_id) &&
+            let Some(object_id) = data.object_id &&
+            let Some(&entity) = objects.objects.get(&object_id) {
             commands.entity(entity).custom_despawn();
         }
     }
@@ -118,13 +118,19 @@ pub fn on_player_spawn(
             }
         };
 
-        let entity = commands.entity(entity).insert(get_player_bundle(e.player_id, None))
+        commands.entity(entity).insert(get_player_bundle(e.player_id, None))
             .insert(Object { id: e.object_id })
             .with_children(|p| {
                 p.spawn(get_turret_bundle());
-            }).id();
+            });
 
-        lobby.insert_entity(e.player_id, entity).unwrap();
+        if let Some(mut data) = lobby.player_data.get_mut(&e.player_id) {
+            data.object_id = Some(e.object_id);
+        } else {
+            let mut data = PlayerData::default();
+            data.object_id = Some(e.object_id);
+            lobby.player_data.insert(e.player_id, data);
+        }
     });
 }
 
@@ -152,7 +158,6 @@ pub fn main_menu_on_load(
 pub fn show_player_lobby(
     mut egui_ctx: EguiContexts,
     lobby: Res<Lobby>,
-    objects: Res<SyncedObjects>,
 ) {
     egui::Window::new("Lobby")
         .show(egui_ctx.ctx_mut(), |ui| {
@@ -161,9 +166,5 @@ pub fn show_player_lobby(
                     ui.label(format!("Player {}: Entity {:?}", player.0, player.1.clone()));
                 });
             });
-
-            ui.group(|ui| {
-
-            })
         });
 }

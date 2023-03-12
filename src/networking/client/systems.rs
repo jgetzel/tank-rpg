@@ -10,6 +10,7 @@ use crate::networking::client::{ClientId, ClientMessage, RecvObjectDespawnEvent,
 use crate::networking::messages::*;
 use crate::object::{Object, SyncedObjects};
 use crate::networking::client::RecvPlayerSpawnEvent;
+use crate::networking::events::OnPlayerSpawnEvent;
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
@@ -104,6 +105,7 @@ pub fn on_player_leave(
 
 pub fn on_player_spawn(
     mut spawn_event: EventReader<RecvPlayerSpawnEvent>,
+    mut spawn_writer: EventWriter<OnPlayerSpawnEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
     mut objects: ResMut<SyncedObjects>,
@@ -127,10 +129,13 @@ pub fn on_player_spawn(
         if let Some(mut data) = lobby.player_data.get_mut(&e.player_id) {
             data.object_id = Some(e.object_id);
         } else {
-            let mut data = PlayerData::default();
-            data.object_id = Some(e.object_id);
-            lobby.player_data.insert(e.player_id, data);
+            lobby.player_data.insert(e.player_id, PlayerData::new(e.object_id));
         }
+
+        spawn_writer.send(OnPlayerSpawnEvent {
+            player_id: e.player_id,
+            object_id: e.object_id
+        });
     });
 }
 

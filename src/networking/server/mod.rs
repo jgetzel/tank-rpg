@@ -1,13 +1,10 @@
 mod systems;
-pub mod events;
 
 use bevy::app::{App, Plugin};
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
-use bevy_quinnet::server::{QuinnetServerPlugin};
-use events::OnObjectDespawnEvent;
-use crate::networking::{is_server_listening};
-use crate::networking::server::events::*;
+use bevy_quinnet::server::QuinnetServerPlugin;
+use crate::networking::is_server_listening;
 use crate::networking::server::ServerSet::*;
 use crate::networking::server::systems::*;
 use crate::scenes::AppState;
@@ -19,9 +16,6 @@ pub struct ServerPlugin;
 impl Plugin for ServerPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(QuinnetServerPlugin::default())
-            .add_event::<OnObjectDespawnEvent>()
-            .add_event::<OnPlayerSpawnEvent>()
-            .add_event::<OnPlayerConnectEvent>()
             .add_system(in_game_on_load.in_set(OnUpdate(AppState::Loading)))
             .add_system(server_start_listening.in_schedule(OnEnter(AppState::InGame)))
             .add_system(server_recv.in_set(ServerReceive))

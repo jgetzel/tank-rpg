@@ -1,6 +1,7 @@
 pub mod server;
 pub mod client;
 pub mod messages;
+pub mod events;
 
 use std::collections::HashMap;
 use bevy::app::{App, Plugin};
@@ -10,6 +11,7 @@ use bevy_quinnet::server::Server;
 use serde::{Deserialize, Serialize};
 use crate::networking::messages::PlayerId;
 use crate::networking::client::ClientSet::*;
+use crate::networking::events::*;
 use crate::networking::server::ServerSet::*;
 use crate::object::ObjectId;
 
@@ -28,6 +30,11 @@ impl Plugin for NetworkingPlugin {
             .configure_set(ClientReceive.before(ClientUpdate).run_if(is_client_connected))
             .configure_set(ClientUpdate.before(ClientSend).run_if(is_client_connected))
             .configure_set(ClientSend.run_if(is_client_connected));
+
+        app
+            .add_event::<OnObjectDespawnEvent>()
+            .add_event::<OnPlayerSpawnEvent>()
+            .add_event::<OnPlayerConnectEvent>();
     }
 }
 

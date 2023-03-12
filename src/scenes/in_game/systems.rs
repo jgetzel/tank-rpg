@@ -3,7 +3,7 @@ use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use bevy::time::Time;
 use crate::networking::{Lobby, PlayerData};
-use crate::networking::server::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent};
+use crate::networking::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::object::{Object, SyncedObjects};
 use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::player::{DeathEvent, Player, spawn_new_player};

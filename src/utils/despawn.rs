@@ -3,7 +3,7 @@ use bevy::prelude::{Entity, info, World};
 use bevy_quinnet::server::Server;
 use bevy::hierarchy::Children;
 use crate::networking::Lobby;
-use crate::networking::server::events::OnObjectDespawnEvent;
+use crate::networking::events::OnObjectDespawnEvent;
 use crate::object::{Object, SyncedObjects};
 use crate::player::Player;
 

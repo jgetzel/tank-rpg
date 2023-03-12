@@ -1,13 +1,15 @@
 use std::iter::zip;
 use bevy::app::{App, Plugin};
-use bevy::prelude::{Camera, Commands, Component, debug, EventReader, Query, Reflect, Res, Transform, With, Without};
+use bevy::prelude::{Camera, Commands, Component, debug, EventReader, IntoSystemConfig, Query, Reflect, Res, Transform, With, Without};
 use bevy::time::Time;
-use bevy_renet::renet::RenetClient;
 use serde::{Deserialize, Serialize};
 use crate::sprite_updater::CAMERA_LAYER;
-use crate::networking::Lobby;
+use crate::networking::{is_client_exe};
+use crate::networking::client::ClientId;
+use crate::networking::client::ClientSet::{ClientReceive};
 use crate::player::components::You;
-use crate::player::PlayerSpawnEvent;
+use crate::networking::events::OnPlayerSpawnEvent;
+use crate::object::SyncedObjects;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -20,7 +22,7 @@ impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<MainCamera>()
             .add_system(camera_move)
-            .add_system(you_tag_adder);
+            .add_system(you_tag_adder.run_if(is_client_exe).after(ClientReceive));
     }
 }
 
@@ -41,16 +43,17 @@ fn camera_move(
 }
 
 fn you_tag_adder(
-    mut spawn_event: EventReader<PlayerSpawnEvent>,
+    mut spawn_event: EventReader<OnPlayerSpawnEvent>,
     mut commands: Commands,
-    client: Option<Res<RenetClient>>,
-    lobby: Res<Lobby>,
+    client: Option<Res<ClientId>>,
+    objects: Res<SyncedObjects>,
 ) {
-    let Some(client) = client else { return; };
-    for ev in spawn_event.iter() {
-        if ev.player_id == client.client_id() {
-            if let Some(&player_entity) = lobby.players.get(&ev.player_id) {
-                commands.entity(player_entity).insert(You);
+    if let Some(client) = client {
+        for ev in spawn_event.iter() {
+            if ev.player_id == client.0 &&
+                let Some(&entity) = objects.objects.get(&ev.object_id) {
+
+                commands.entity(entity).insert(You);
                 debug!("'You' tag added for Player {}", ev.player_id);
             }
         }

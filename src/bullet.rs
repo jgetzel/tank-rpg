@@ -1,9 +1,4 @@
-use bevy::app::App;
-use bevy::core::Name;
-use bevy::log::info;
-use bevy::prelude::{Children, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, IntoSystemDescriptor, Plugin, Quat, Query, Res, SystemLabel, Transform, TransformBundle, Vec3, With};
-use bevy::time::Time;
-use bevy::utils::{default};
+use bevy::prelude::*;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{ActiveEvents, CollisionEvent, RigidBody, Sensor, Velocity};
 use crate::asset_loader::components::SpriteEnum;
@@ -13,7 +8,7 @@ use crate::sprite_updater::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
 use crate::player::{DeathEvent, Health};
-use crate::utils::CustomDespawn;
+use crate::utils::despawn::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;
@@ -25,10 +20,11 @@ pub struct BulletPlugin;
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<BulletCollisionEvent>()
-            .add_system(fire_bullet)
-            .add_system(bullet_decay)
-            .add_system(bullet_collision_sender.label(CollisionSend))
-            .add_system(bullet_collision_handler.label(CollisionHandle)
+            .configure_set(CollisionSend.before(CollisionHandle))
+            .add_system(fire_bullet.before(CollisionSend))
+            .add_system(bullet_decay.after(fire_bullet))
+            .add_system(bullet_collision_sender.in_set(CollisionSend))
+            .add_system(bullet_collision_handler.in_set(CollisionHandle)
                 .after(CollisionSend));
     }
 }
@@ -46,7 +42,7 @@ pub struct BulletCollisionEvent {
     pub player: Entity
 }
 
-#[derive(SystemLabel)]
+#[derive(SystemSet, Debug, Eq, PartialEq, Hash, Clone)]
 pub enum BulletSystemStage {
     CollisionSend,
     CollisionHandle
@@ -110,7 +106,6 @@ fn bullet_collision_sender(
 ) {
     collision_events.iter().for_each(|&e| {
         if let CollisionEvent::Started(ent1, ent2, _) = e {
-            info!("CollisionEvent occurred between {:?} and {:?}", ent1, ent2);
             let pair = [ent1, ent2];
             let bullet: Option<(Entity, &Bullet)> = pair.into_iter().filter_map(|e| {
                 bullets.get(e).ok()
@@ -144,6 +139,5 @@ fn bullet_collision_handler(
         if health.health <= 0. {
             death_writer.send(DeathEvent { entity });
         }
-        info!("{e:?}");
     })
 }

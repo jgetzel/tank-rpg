@@ -11,7 +11,7 @@ use crate::networking::messages::*;
 use crate::object::{Object, SyncedObjects};
 use crate::networking::client::RecvPlayerSpawnEvent;
 use crate::networking::events::OnPlayerSpawnEvent;
-use crate::player::bundles::{get_player_bundle, get_turret_bundle};
+use crate::prefabs::{get_player_bundle, get_turret_bundle};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
 

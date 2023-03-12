@@ -37,3 +37,6 @@ pub struct RespawnTimer {
 pub struct OnRespawnTimerFinish {
     player_id: PlayerId,
 }
+
+#[derive(Component)]
+pub struct SpawnPoint;

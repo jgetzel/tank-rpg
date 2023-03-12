@@ -1,4 +1,3 @@
-pub mod bundles;
 pub mod components;
 mod systems;
 mod utils;
@@ -12,6 +11,7 @@ use bevy::prelude::{BuildChildren, Commands, Entity, IntoSystemConfig, Plugin};
 use crate::bullet::BulletSystemStage::CollisionHandle;
 use crate::networking::messages::PlayerId;
 use crate::player::systems::death_reader;
+use crate::prefabs;
 
 pub struct PlayerPlugin;
 
@@ -26,9 +26,9 @@ impl Plugin for PlayerPlugin {
 }
 
 pub fn spawn_new_player(commands: &mut Commands, id: PlayerId, pos: Option<Vec2>) -> Entity {
-    commands.spawn(bundles::get_player_bundle(id, pos))
+    commands.spawn(prefabs::get_player_bundle(id, pos))
         .with_children(|p| {
-            p.spawn(bundles::get_turret_bundle());
+            p.spawn(prefabs::get_turret_bundle());
         }).id()
 }
 

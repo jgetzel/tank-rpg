@@ -8,7 +8,7 @@ use crate::networking::{is_client_exe, Lobby};
 use crate::networking::client::ClientId;
 use crate::networking::client::ClientSet::ClientReceive;
 use crate::player::components::You;
-use crate::player::PlayerSpawnEvent;
+use crate::networking::client::RecvPlayerSpawnEvent;
 
 static CAMERA_SMOOTHING: f32 = 2.;
 
@@ -42,7 +42,7 @@ fn camera_move(
 }
 
 fn you_tag_adder(
-    mut spawn_event: EventReader<PlayerSpawnEvent>,
+    mut spawn_event: EventReader<RecvPlayerSpawnEvent>,
     mut commands: Commands,
     client: Option<Res<ClientId>>,
     lobby: Res<Lobby>,

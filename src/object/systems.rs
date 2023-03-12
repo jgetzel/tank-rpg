@@ -1,15 +1,15 @@
 use crate::asset_loader::components::SpriteEnum;
-use crate::networking::{PhysObjUpdateEvent, TurretUpdateEvent};
 use crate::object::components::Object;
 use crate::object::SyncedObjects;
 use bevy::prelude::{Children, Commands, default, Entity, EventReader, Query, Res, ResMut, SpriteBundle, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use crate::asset_loader::resources::SpriteAssets;
+use crate::networking::client::{RecvPhysObjUpdateEvent, RecvTurretUpdateEvent};
 use crate::player::{Player, PlayerTurret};
 
 #[allow(clippy::type_complexity)]
 pub fn phys_obj_updater(
-    mut update_event: EventReader<PhysObjUpdateEvent>,
+    mut update_event: EventReader<RecvPhysObjUpdateEvent>,
     mut query: Query<(&mut Transform,
                       Option<&mut Velocity>,
                       Option<&mut SpriteEnum>),
@@ -40,7 +40,7 @@ pub fn phys_obj_updater(
 }
 
 pub fn turr_updater(
-    mut update_event: EventReader<TurretUpdateEvent>,
+    mut update_event: EventReader<RecvTurretUpdateEvent>,
     objects: ResMut<SyncedObjects>,
     parent_q: Query<&Children, With<Player>>,
     mut turr_q: Query<&mut Transform, With<PlayerTurret>>
@@ -58,7 +58,7 @@ pub fn turr_updater(
     })
 }
 
-fn init_object(event: &PhysObjUpdateEvent, commands: &mut Commands, assets: &SpriteAssets) -> Entity {
+fn init_object(event: &RecvPhysObjUpdateEvent, commands: &mut Commands, assets: &SpriteAssets) -> Entity {
     commands
         .spawn((
             SpriteBundle {

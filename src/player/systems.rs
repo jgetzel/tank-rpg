@@ -1,3 +1,4 @@
+use bevy::log::info;
 use bevy::prelude::{Children, Commands, EventReader, GlobalTransform, Query, Res, Time, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::math::{Quat, Vec3};
@@ -36,6 +37,7 @@ pub fn death_reader(
     mut commands: Commands,
 ) {
     death_events.iter().for_each(|e| {
+        info!("Death Event for Entity {:?}", e.entity);
         commands.entity(e.entity).custom_despawn();
     });
 }

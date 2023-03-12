@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use bevy::prelude::{Vec3, Vec2, Quat};
 use bevy::utils::HashMap;
 use crate::asset_loader::components::SpriteEnum;
+use crate::networking::PlayerData;
 use crate::object::ObjectId;
 
 pub type PlayerId = u64;
@@ -9,9 +10,10 @@ pub type PlayerId = u64;
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessage {
     YouConnected { player_id: PlayerId },
-    PlayerConnected { player_id: PlayerId, object_id: ObjectId },
+    PlayerConnected { player_id: PlayerId, data: PlayerData },
     PlayerDisconnected { player_id: PlayerId },
     ObjectDespawn { object_id: ObjectId },
+    PlayerSpawn { player_id: PlayerId, object_id: ObjectId },
     PhysObjUpdate { objects: HashMap<ObjectId, PhysicsObjData> },
     TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> } //TODO find a better way
 }

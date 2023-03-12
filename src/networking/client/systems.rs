@@ -1,13 +1,17 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, NextState, Res, ResMut};
+use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, NextState, Res, ResMut};
 use bevy::log::info;
+use bevy_egui::{egui, EguiContexts};
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
-use crate::networking::{Lobby, ObjectDespawnEvent, PhysObjUpdateEvent, PlayerConnectEvent, PlayerData, PlayerLeaveEvent, TurretUpdateEvent};
-use crate::networking::client::{ClientId, ClientMessage, YouConnectEvent};
+use crate::networking::{Lobby, PlayerData};
+use crate::networking::client::{ClientId, ClientMessage, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerLeaveEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
 use crate::networking::messages::*;
-use crate::object::SyncedObjects;
+use crate::object::{Object, SyncedObjects};
+use crate::networking::client::RecvPlayerSpawnEvent;
+use crate::networking::server::events::OnPlayerSpawnEvent;
+use crate::player::bundles::{get_player_bundle, get_turret_bundle};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
 
@@ -24,35 +28,40 @@ pub fn client_send(
 
 pub fn client_recv(
     mut client: ResMut<Client>,
-    mut you_joined_event: EventWriter<YouConnectEvent>,
-    mut join_event: EventWriter<PlayerConnectEvent>,
-    mut leave_event: EventWriter<PlayerLeaveEvent>,
-    mut despawn_event: EventWriter<ObjectDespawnEvent>,
-    mut phys_update_event: EventWriter<PhysObjUpdateEvent>,
-    mut turr_update_event: EventWriter<TurretUpdateEvent>,
+    (mut you_joined_event, mut join_event, mut leave_event):
+    (
+        EventWriter<RecvYouConnectEvent>, EventWriter<RecvPlayerConnectEvent>, EventWriter<RecvPlayerLeaveEvent>,
+    ),
+    mut despawn_event: EventWriter<RecvObjectDespawnEvent>,
+    mut spawn_event: EventWriter<RecvPlayerSpawnEvent>,
+    mut phys_update_event: EventWriter<RecvPhysObjUpdateEvent>,
+    mut turr_update_event: EventWriter<RecvTurretUpdateEvent>,
 ) {
     while let Ok(Some(message)) = client.connection_mut().receive_message::<ServerMessage>() {
         match message {
             ServerMessage::YouConnected { player_id } => {
-                you_joined_event.send(YouConnectEvent { player_id });
+                you_joined_event.send(RecvYouConnectEvent { player_id });
             }
-            ServerMessage::PlayerConnected { player_id, object_id } => {
-                join_event.send(PlayerConnectEvent { player_id, object_id });
+            ServerMessage::PlayerConnected { player_id, data } => {
+                join_event.send(RecvPlayerConnectEvent { player_id, data });
             }
             ServerMessage::PlayerDisconnected { player_id } => {
-                leave_event.send(PlayerLeaveEvent { player_id });
+                leave_event.send(RecvPlayerLeaveEvent { player_id });
+            }
+            ServerMessage::PlayerSpawn { player_id, object_id } => {
+                spawn_event.send(RecvPlayerSpawnEvent { player_id, object_id });
             }
             ServerMessage::ObjectDespawn { object_id } => {
-                despawn_event.send(ObjectDespawnEvent { object_id });
+                despawn_event.send(RecvObjectDespawnEvent { object_id });
             }
             ServerMessage::PhysObjUpdate { objects } => {
                 objects.into_iter().for_each(|(id, data)| {
-                    phys_update_event.send(PhysObjUpdateEvent { id, data })
-                })
+                    phys_update_event.send(RecvPhysObjUpdateEvent { id, data })
+                });
             }
             ServerMessage::TurretRotationUpdate { turrets } => {
                 turrets.into_iter().for_each(|(parent_id, rotation)| {
-                    turr_update_event.send(TurretUpdateEvent { parent_id, rotation });
+                    turr_update_event.send(RecvTurretUpdateEvent { parent_id, rotation });
                 })
             }
         }
@@ -60,16 +69,28 @@ pub fn client_recv(
 }
 
 pub fn on_you_joined(
-    mut you_join_events: EventReader<YouConnectEvent>,
+    mut you_join_events: EventReader<RecvYouConnectEvent>,
     mut commands: Commands,
 ) {
     you_join_events.iter().for_each(|e| {
-       commands.insert_resource(ClientId(e.player_id));
+        commands.insert_resource(ClientId(e.player_id));
+    });
+}
+
+pub fn on_player_join(
+    mut join_ev: EventReader<RecvPlayerConnectEvent>,
+    mut lobby: ResMut<Lobby>,
+) {
+    join_ev.iter().for_each(|ev| {
+        info!("Player {} Connected", ev.player_id);
+        let mut data = ev.data.clone();
+        data.entity = None;
+        lobby.insert_data(ev.player_id, data).unwrap();
     });
 }
 
 pub fn on_player_leave(
-    mut leave_events: EventReader<PlayerLeaveEvent>,
+    mut leave_events: EventReader<RecvPlayerLeaveEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
 ) {
@@ -81,13 +102,38 @@ pub fn on_player_leave(
     }
 }
 
+pub fn on_player_spawn(
+    mut spawn_event: EventReader<RecvPlayerSpawnEvent>,
+    mut commands: Commands,
+    mut lobby: ResMut<Lobby>,
+    mut objects: ResMut<SyncedObjects>,
+) {
+    spawn_event.iter().for_each(|e| {
+        let entity = match objects.objects.get(&e.object_id) {
+            Some(&entity) => entity,
+            None => {
+                let ent = commands.spawn_empty().id();
+                objects.objects.insert(e.object_id, ent);
+                ent
+            }
+        };
+
+        let entity = commands.entity(entity).insert(get_player_bundle(e.player_id, None))
+            .insert(Object { id: e.object_id })
+            .with_children(|p| {
+                p.spawn(get_turret_bundle());
+            }).id();
+
+        lobby.insert_entity(e.player_id, entity).unwrap();
+    });
+}
+
 pub fn on_object_despawn(
-    mut events: EventReader<ObjectDespawnEvent>,
+    mut events: EventReader<RecvObjectDespawnEvent>,
     objects: Res<SyncedObjects>,
     mut commands: Commands,
 ) {
     events.iter().for_each(|event| {
-        info!("Received despawn from server");
         if let Some(&ent) = objects.objects.get(&event.object_id) {
             commands.entity(ent).custom_despawn();
         }
@@ -101,4 +147,23 @@ pub fn main_menu_on_load(
     if evt.iter().next().is_some() {
         next_state.set(AppState::MainMenu);
     }
+}
+
+pub fn show_player_lobby(
+    mut egui_ctx: EguiContexts,
+    lobby: Res<Lobby>,
+    objects: Res<SyncedObjects>,
+) {
+    egui::Window::new("Lobby")
+        .show(egui_ctx.ctx_mut(), |ui| {
+            ui.group(|ui| {
+                lobby.player_data.iter().for_each(|player| {
+                    ui.label(format!("Player {}: Entity {:?}", player.0, player.1.clone()));
+                });
+            });
+
+            ui.group(|ui| {
+
+            })
+        });
 }

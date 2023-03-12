@@ -1,9 +1,9 @@
 use bevy::ecs::system::{Command, EntityCommands};
-use bevy::prelude::{Entity, World};
+use bevy::prelude::{Entity, info, World};
 use bevy_quinnet::server::Server;
 use bevy::hierarchy::Children;
 use crate::networking::Lobby;
-use crate::networking::server::ObjectDespawnEvent;
+use crate::networking::server::events::OnObjectDespawnEvent;
 use crate::object::{Object, SyncedObjects};
 use crate::player::Player;
 
@@ -26,6 +26,7 @@ fn custom_despawn(world: &mut World, entity: Entity) {
     if let Some(player) = world.get::<Player>(entity) {
         let player = player.clone();
         let mut lobby = world.get_resource_mut::<Lobby>().unwrap();
+        info!("Removing player from lobby: {}", {player.id});
         lobby.remove_entity(&player.id);
     }
 
@@ -34,7 +35,7 @@ fn custom_despawn(world: &mut World, entity: Entity) {
         objects.objects.remove(&object.id);
 
         if world.get_resource::<Server>().is_some() {
-            world.send_event::<ObjectDespawnEvent>(ObjectDespawnEvent { id: object.id });
+            world.send_event::<OnObjectDespawnEvent>(OnObjectDespawnEvent { id: object.id });
         }
     }
 

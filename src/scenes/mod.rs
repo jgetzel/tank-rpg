@@ -1,4 +1,4 @@
-mod in_game;
+pub mod in_game;
 
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Commands, States, World};

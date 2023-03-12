@@ -106,7 +106,6 @@ fn bullet_collision_sender(
 ) {
     collision_events.iter().for_each(|&e| {
         if let CollisionEvent::Started(ent1, ent2, _) = e {
-            info!("CollisionEvent occurred between {:?} and {:?}", ent1, ent2);
             let pair = [ent1, ent2];
             let bullet: Option<(Entity, &Bullet)> = pair.into_iter().filter_map(|e| {
                 bullets.get(e).ok()
@@ -140,6 +139,5 @@ fn bullet_collision_handler(
         if health.health <= 0. {
             death_writer.send(DeathEvent { entity });
         }
-        info!("{e:?}");
     })
 }

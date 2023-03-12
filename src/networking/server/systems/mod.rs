@@ -1,14 +1,14 @@
 pub mod ui;
 
-use bevy::prelude::{Children, Commands, Entity, EventReader, NextState, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{Children, Commands, EventReader, EventWriter, NextState, Query, Res, ResMut, Transform, With};
 use bevy::log::info;
 use std::mem::size_of;
-use std::net::{Ipv4Addr};
+use std::net::Ipv4Addr;
 use bevy::tasks::{ParallelSlice, TaskPool};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::utils::HashMap;
 use bevy_egui::{egui, EguiContexts};
-use bevy_egui::egui::{Align2};
+use bevy_egui::egui::Align2;
 use bevy_quinnet::server::{ConnectionEvent, ConnectionLostEvent, Server, ServerConfiguration};
 use bevy_quinnet::server::certificate::CertificateRetrievalMode;
 use bevy_quinnet::shared::channel::ChannelId;
@@ -16,13 +16,14 @@ use local_ip_address::local_ip;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::SpriteEnum;
 use crate::networking::{Lobby, PlayerData};
-use crate::networking::client::ClientMessage;
+use crate::networking::client::{ClientMessage};
 use crate::networking::messages::{PhysicsObjData, ServerMessage};
-use crate::networking::server::{ObjectDespawnEvent, SERVER_PORT};
+use crate::networking::server::SERVER_PORT;
+use crate::networking::server::events::{OnObjectDespawnEvent, OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::networking::server::systems::ui::ServerVisualizer;
 use crate::object::ObjectId;
 use crate::object::components::Object;
-use crate::player::{Player, PlayerTurret, spawn_new_player};
+use crate::player::{Player, PlayerTurret};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
 use crate::utils::TryInsertExt;
@@ -114,7 +115,7 @@ pub fn server_start_listening(mut server: ResMut<Server>) {
 }
 
 pub fn on_object_despawn(
-    mut despawn_event: EventReader<ObjectDespawnEvent>,
+    mut despawn_event: EventReader<OnObjectDespawnEvent>,
     server: Res<Server>,
 ) {
     despawn_event.iter().for_each(|e| {
@@ -127,27 +128,19 @@ pub fn on_object_despawn(
 
 pub fn on_client_connect(
     mut connection_events: EventReader<ConnectionEvent>,
-    mut commands: Commands,
+    mut spawn_event_writer: EventWriter<OnPlayerConnectEvent>,
     server: Res<Server>,
     mut lobby: ResMut<Lobby>,
-    mut objects: Query<&mut Object>,
 ) {
     for &ConnectionEvent { id } in connection_events.iter() {
         info!("Player {id} Connected.");
-        let new_player_entity: Entity = spawn_new_player(&mut commands, id, None);
-        let new_object = Object::new();
-        commands.entity(new_player_entity).insert(new_object);
-        for (&player_id, data) in lobby.player_data.iter() {
-            if let Some(entity) = data.entity {
-                let object_id = objects.get_mut(entity).unwrap().id;
-                server.endpoint().send_message_on(
-                    id,
-                    ChannelId::UnorderedReliable,
-                    ServerMessage::PlayerConnected { player_id, object_id },
-                ).unwrap();
 
-            }
-        }
+        server.endpoint().broadcast_message_on(
+            ChannelId::UnorderedReliable,
+            ServerMessage::PlayerConnected {
+                player_id: id,
+                data: PlayerData::default(),
+            }).unwrap();
 
         server.endpoint().send_message_on(
             id,
@@ -155,16 +148,19 @@ pub fn on_client_connect(
             ServerMessage::YouConnected { player_id: id },
         ).unwrap();
 
-        lobby.player_data.insert(id, PlayerData {
-            entity: Some(new_player_entity)
-        });
+        for (&player_id, data) in lobby.player_data.iter() {
+            server.endpoint().send_message_on(
+                id,
+                ChannelId::UnorderedReliable,
+                ServerMessage::PlayerConnected { player_id, data: data.clone() },
+            ).unwrap();
+        }
 
-        server.endpoint().broadcast_message_on(
-            ChannelId::UnorderedReliable,
-            ServerMessage::PlayerConnected {
-                player_id: id,
-                object_id: new_object.id,
-            }).unwrap();
+        lobby.player_data.insert(id, PlayerData::default());
+
+        spawn_event_writer.send(OnPlayerConnectEvent {
+            player_id: id,
+        });
     }
 }
 
@@ -187,6 +183,21 @@ pub fn on_client_disconnect(
             ServerMessage::PlayerDisconnected { player_id: id },
         ).unwrap();
     }
+}
+
+pub fn on_player_spawn(
+    mut spawn_events: EventReader<OnPlayerSpawnEvent>,
+    server: Res<Server>,
+) {
+    spawn_events.iter().for_each(|e| {
+        server.endpoint().broadcast_message_on(
+            ChannelId::UnorderedReliable,
+            ServerMessage::PlayerSpawn {
+                player_id: e.player_id,
+                object_id: e.object_id,
+            },
+        ).unwrap();
+    });
 }
 
 pub fn server_stats_egui(

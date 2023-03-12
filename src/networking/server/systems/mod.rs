@@ -1,6 +1,6 @@
 pub mod ui;
 
-use bevy::prelude::{Children, Commands, EventReader, EventWriter, NextState, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{Children, Commands, EventReader, EventWriter, GlobalTransform, NextState, Query, Res, ResMut, Transform, With};
 use bevy::log::info;
 use std::mem::size_of;
 use std::net::Ipv4Addr;
@@ -135,6 +135,7 @@ pub fn on_client_connect(
     mut spawn_event_writer: EventWriter<OnPlayerConnectEvent>,
     server: Res<Server>,
     mut lobby: ResMut<Lobby>,
+    player_query: Query<(&GlobalTransform, &Object), With<Player>>,
 ) {
     for &ConnectionEvent { id } in connection_events.iter() {
         info!("Player {id} Connected.");
@@ -160,10 +161,15 @@ pub fn on_client_connect(
             ).unwrap();
 
             if let Some(object_id) = data.object_id {
+                //TODO inefficient linear search, add objects map to server as well?
+                let position = player_query.iter()
+                    .find(|(_, obj)| obj.id == object_id)
+                    .unwrap().0.translation().truncate();
+
                 server.endpoint().send_message_on(
                     id,
                     ChannelId::UnorderedReliable,
-                    ServerMessage::PlayerSpawn { player_id, object_id },
+                    ServerMessage::PlayerSpawn { player_id, object_id, position },
                 ).unwrap();
             }
         }
@@ -180,8 +186,8 @@ pub fn on_client_disconnect(
     mut lost_connect_events: EventReader<ConnectionLostEvent>,
     mut commands: Commands,
     server: Res<Server>,
-    lobby: Res<Lobby>,
-    objects: Res<SyncedObjects>,
+    lobby: ResMut<Lobby>,
+    objects: ResMut<SyncedObjects>,
 ) {
     for &ConnectionLostEvent { id } in lost_connect_events.iter() {
         info!("Player {id} Disconnected");
@@ -209,6 +215,7 @@ pub fn on_player_spawn(
             ServerMessage::PlayerSpawn {
                 player_id: e.player_id,
                 object_id: e.object_id,
+                position: e.position,
             },
         ).unwrap();
     });

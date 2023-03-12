@@ -1,3 +1,4 @@
+use bevy::math::Vec2;
 use crate::networking::messages::PlayerId;
 use crate::object::ObjectId;
 
@@ -11,5 +12,6 @@ pub struct OnPlayerConnectEvent {
 
 pub struct OnPlayerSpawnEvent {
     pub player_id: PlayerId,
-    pub object_id: ObjectId
+    pub object_id: ObjectId,
+    pub position: Vec2,
 }

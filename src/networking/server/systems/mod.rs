@@ -1,6 +1,6 @@
 pub mod ui;
 
-use bevy::prelude::{Children, Commands, EventReader, EventWriter, GlobalTransform, NextState, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{Children, Commands, Entity, EventReader, EventWriter, GlobalTransform, NextState, Query, Res, ResMut, Transform, With};
 use bevy::log::info;
 use std::mem::size_of;
 use std::net::Ipv4Addr;
@@ -32,7 +32,7 @@ pub fn server_recv(
     mut server: ResMut<Server>,
     mut commands: Commands,
     lobby: Res<Lobby>,
-    objects: Res<SyncedObjects>
+    objects: Res<SyncedObjects>,
 ) {
     let endpoint = server.endpoint_mut();
     for client_id in endpoint.clients().into_iter() {
@@ -42,7 +42,6 @@ pub fn server_recv(
                     if let Some(data) = lobby.player_data.get(&client_id) &&
                         let Some(object_id) = data.object_id &&
                         let Some(&entity) = objects.objects.get(&object_id) {
-
                         commands.entity(entity).try_insert(input);
                     }
                 }
@@ -103,21 +102,21 @@ pub fn server_send_turrets(
 pub fn update_kill_death_count(
     mut kill_events: EventReader<OnKillEvent>,
     mut lobby: ResMut<Lobby>,
-    server: Res<Server>
+    server: Res<Server>,
 ) {
     kill_events.iter().for_each(|e| {
         if let Some(mut attacker_data) = lobby.player_data.get_mut(&e.attacker_id) {
             attacker_data.kills += 1;
             server.endpoint().broadcast_message_on(
                 ChannelId::UnorderedReliable,
-                ServerMessage::LobbyUpdate { player_id: e.attacker_id, data: attacker_data.clone()}
+                ServerMessage::LobbyUpdate { player_id: e.attacker_id, data: attacker_data.clone() },
             ).unwrap();
         }
         if let Some(victim_data) = lobby.player_data.get_mut(&e.victim_id) {
             victim_data.deaths += 1;
             server.endpoint().broadcast_message_on(
                 ChannelId::UnorderedReliable,
-                ServerMessage::LobbyUpdate { player_id: e.victim_id, data: victim_data.clone()}
+                ServerMessage::LobbyUpdate { player_id: e.victim_id, data: victim_data.clone() },
             ).unwrap();
         }
     });
@@ -209,12 +208,12 @@ pub fn on_client_disconnect(
     mut lost_connect_events: EventReader<ConnectionLostEvent>,
     mut commands: Commands,
     server: Res<Server>,
-    lobby: ResMut<Lobby>,
+    mut lobby: ResMut<Lobby>,
     objects: ResMut<SyncedObjects>,
 ) {
     for &ConnectionLostEvent { id } in lost_connect_events.iter() {
         info!("Player {id} Disconnected");
-        if let Some(data) = lobby.player_data.get(&id) &&
+        if let Some(data) = lobby.player_data.remove(&id) &&
             let Some(object_id) = data.object_id &&
             let Some(&entity) = objects.objects.get(&object_id)
         {

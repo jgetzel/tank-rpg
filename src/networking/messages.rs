@@ -14,6 +14,7 @@ pub enum ServerMessage {
     PlayerDisconnected { player_id: PlayerId },
     ObjectDespawn { object_id: ObjectId },
     PlayerSpawn { player_id: PlayerId, object_id: ObjectId, position: Vec2 },
+    LobbyUpdate { player_id: PlayerId, data: PlayerData },
     PhysObjUpdate { objects: HashMap<ObjectId, PhysicsObjData> },
     TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> } //TODO find a better way
 }

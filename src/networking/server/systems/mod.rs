@@ -23,7 +23,7 @@ use crate::networking::server::SERVER_PORT;
 use crate::networking::server::systems::ui::ServerVisualizer;
 use crate::object::{ObjectId, SyncedObjects};
 use crate::object::components::Object;
-use crate::player::{Player, PlayerTurret};
+use crate::player::{OnKillEvent, Player, PlayerTurret};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
 use crate::utils::TryInsertExt;
@@ -98,6 +98,29 @@ pub fn server_send_turrets(
         ChannelId::Unreliable,
         ServerMessage::TurretRotationUpdate { turrets },
     ).unwrap();
+}
+
+pub fn update_kill_death_count(
+    mut kill_events: EventReader<OnKillEvent>,
+    mut lobby: ResMut<Lobby>,
+    server: Res<Server>
+) {
+    kill_events.iter().for_each(|e| {
+        if let Some(mut attacker_data) = lobby.player_data.get_mut(&e.attacker_id) {
+            attacker_data.kills += 1;
+            server.endpoint().broadcast_message_on(
+                ChannelId::UnorderedReliable,
+                ServerMessage::LobbyUpdate { player_id: e.attacker_id, data: attacker_data.clone()}
+            ).unwrap();
+        }
+        if let Some(victim_data) = lobby.player_data.get_mut(&e.victim_id) {
+            victim_data.deaths += 1;
+            server.endpoint().broadcast_message_on(
+                ChannelId::UnorderedReliable,
+                ServerMessage::LobbyUpdate { player_id: e.victim_id, data: victim_data.clone()}
+            ).unwrap();
+        }
+    });
 }
 
 pub fn in_game_on_load(

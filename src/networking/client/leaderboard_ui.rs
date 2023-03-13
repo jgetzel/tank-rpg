@@ -34,11 +34,13 @@ fn leaderboard_ui(
                             .collect::<Vec<(PlayerId, PlayerData)>>();
 
                         player_vec.sort_by(|(_, data_a), (_, data_b)| {
-                            data_a.kills.cmp(&data_b.kills)
+                            data_b.kills.cmp(&data_a.kills)
                         });
 
                         player_vec.iter().for_each(|(id, data)| {
-                           ui.label(format!("Player {}: {} kills", id, data.kills));
+                            ui.label(format!("Player {}: {} kill{}",
+                                             id, data.kills, if data.kills != 1 { "s" } else { "" }
+                            ));
                         });
                     });
                 })

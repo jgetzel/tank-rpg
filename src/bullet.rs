@@ -7,7 +7,7 @@ use crate::player::components::PlayerInput;
 use crate::sprite_updater::BULLET_LAYER;
 use crate::object::components::Object;
 use crate::player::components::{Player, PlayerTurret};
-use crate::player::{DeathEvent, Health};
+use crate::player::{OnPlayerDeathEvent, Health, OnKillEvent};
 use crate::utils::despawn::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
@@ -128,16 +128,31 @@ fn bullet_collision_sender(
 
 fn bullet_collision_handler(
     mut events: EventReader<BulletCollisionEvent>,
-    mut death_writer: EventWriter<DeathEvent>,
+    mut kill_writer: EventWriter<OnKillEvent>,
+    mut death_writer: EventWriter<OnPlayerDeathEvent>,
     bullets: Query<&Bullet>,
-    mut healths: Query<(Entity, &mut Health)>
+    mut healths: Query<(Entity, &mut Health)>,
+    players: Query<&Player>,
+    mut commands: Commands
 ) {
     events.iter().for_each(|e| {
         let Ok((entity, mut health)) = healths.get_mut(e.player) else { return; };
         let Ok(bullet) = bullets.get(e.bullet) else { return; };
         health.health -= bullet.damage;
         if health.health <= 0. {
-            death_writer.send(DeathEvent { entity });
+            commands.entity(entity).custom_despawn();
+
+            if let Some(attacker) = bullet.owner &&
+                let Ok(&Player { id: victim_id, ..}) = players.get(entity) {
+                death_writer.send(OnPlayerDeathEvent { player_id: victim_id });
+
+                if let Ok(&Player { id: attacker_id, ..}) = players.get(attacker) {
+                    kill_writer.send(OnKillEvent {
+                        attacker_id,
+                        victim_id,
+                    });
+                }
+            }
         }
     })
 }

@@ -1,6 +1,5 @@
 use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, NextState, Res, ResMut};
 use bevy::log::info;
-use bevy_egui::{egui, EguiContexts};
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
 use crate::asset_loader::AssetsLoadedEvent;
@@ -36,6 +35,7 @@ pub fn client_recv(
     mut spawn_event: EventWriter<RecvPlayerSpawnEvent>,
     mut phys_update_event: EventWriter<RecvPhysObjUpdateEvent>,
     mut turr_update_event: EventWriter<RecvTurretUpdateEvent>,
+    mut lobby: ResMut<Lobby>
 ) {
     while let Ok(Some(message)) = client.connection_mut().receive_message::<ServerMessage>() {
         match message {
@@ -53,6 +53,9 @@ pub fn client_recv(
             }
             ServerMessage::ObjectDespawn { object_id } => {
                 despawn_event.send(RecvObjectDespawnEvent { object_id });
+            }
+            ServerMessage::LobbyUpdate { player_id, data} => {
+                *lobby.player_data.get_mut(&player_id).unwrap() = data.clone();
             }
             ServerMessage::PhysObjUpdate { objects } => {
                 objects.into_iter().for_each(|(id, data)| {

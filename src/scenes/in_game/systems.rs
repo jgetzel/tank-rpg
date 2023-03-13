@@ -5,7 +5,7 @@ use bevy::time::Time;
 use crate::networking::Lobby;
 use crate::networking::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent};
 use crate::object::{Object, SyncedObjects};
-use crate::player::{DeathEvent, Player};
+use crate::player::{OnPlayerDeathEvent, Player};
 use crate::prefabs::{default_background, default_camera, get_player_bundle, get_turret_bundle, spawn_point};
 use crate::scenes::in_game::{OnRespawnTimerFinish, RespawnTimer, SpawnPoint};
 
@@ -64,15 +64,11 @@ pub fn spawn_player_system(
 }
 
 pub fn start_respawn_timer_on_death(
-    mut death_reader: EventReader<DeathEvent>,
+    mut death_reader: EventReader<OnPlayerDeathEvent>,
     mut respawn_timer: ResMut<RespawnTimer>,
-    query: Query<&Player>,
 ) {
     death_reader.iter().for_each(|e| {
-        if let Ok(player) = query.get(e.entity) {
-            info!("Starting respawn timer for {}", player.id);
-            respawn_timer.map.insert(player.id, 5.0);
-        }
+        respawn_timer.map.insert(e.player_id, 5.0);
     });
 }
 

@@ -26,6 +26,7 @@ impl Plugin for ServerPlugin {
                     on_client_connect,
                     on_client_disconnect,
                     on_player_spawn,
+                    update_kill_death_count,
                 ).in_set(ServerSend).before(on_object_despawn))
             .add_system(on_object_despawn.in_set(ServerSend));
 

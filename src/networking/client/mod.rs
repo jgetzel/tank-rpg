@@ -3,6 +3,7 @@ mod client_input;
 mod main_menu;
 mod debug_ui;
 mod leaderboard_ui;
+mod health_ui;
 
 pub use crate::player::components::PlayerInput;
 
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::networking::client::client_input::ClientInputPlugin;
 use crate::networking::client::ClientSet::*;
 use crate::networking::client::debug_ui::ClientDebugUI;
+use crate::networking::client::health_ui::ClientHealthDisplayPlugin;
 use crate::networking::client::leaderboard_ui::ClientLeaderboardUI;
 use crate::networking::client::main_menu::MainMenuPlugin;
 use crate::networking::client::systems::*;
@@ -58,7 +60,8 @@ impl Plugin for ClientPlugin {
         #[cfg(debug_assertions)]
         app.add_plugin(ClientDebugUI);
 
-        app.add_plugin(ClientLeaderboardUI);
+        app.add_plugin(ClientLeaderboardUI)
+            .add_plugin(ClientHealthDisplayPlugin);
     }
 }
 

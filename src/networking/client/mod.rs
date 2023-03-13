@@ -38,6 +38,7 @@ impl Plugin for ClientPlugin {
             .add_event::<RecvPlayerLeaveEvent>()
             .add_event::<RecvPlayerSpawnEvent>()
             .add_event::<RecvObjectDespawnEvent>()
+            .add_event::<RecvHealthUpdateEvent>()
             .add_event::<RecvPhysObjUpdateEvent>()
             .add_event::<RecvTurretUpdateEvent>()
             .add_systems(
@@ -52,6 +53,7 @@ impl Plugin for ClientPlugin {
                     on_player_join,
                     on_player_leave,
                     on_player_spawn,
+                    on_health_update,
                 ).in_set(ClientUpdate).before(on_object_despawn)
             )
             .add_system(on_object_despawn.in_set(ClientUpdate))
@@ -86,6 +88,12 @@ pub struct RecvPlayerSpawnEvent {
 
 pub struct RecvObjectDespawnEvent {
     pub object_id: ObjectId,
+}
+
+pub struct RecvHealthUpdateEvent {
+    pub object_id: ObjectId,
+    pub health: f32,
+    pub max_health: f32,
 }
 
 pub struct RecvPhysObjUpdateEvent {

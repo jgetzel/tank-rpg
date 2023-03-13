@@ -36,7 +36,7 @@ pub fn server_recv(
 ) {
     let endpoint = server.endpoint_mut();
     for client_id in endpoint.clients().into_iter() {
-        while let Some(message) = endpoint.receive_message_from::<ClientMessage>(client_id).unwrap() {
+        while let Ok(Some(message)) = endpoint.receive_message_from::<ClientMessage>(client_id) {
             match message {
                 ClientMessage::InputMessage { input } => {
                     if let Some(data) = lobby.player_data.get(&client_id) &&

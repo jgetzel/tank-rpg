@@ -5,6 +5,7 @@ use bevy::utils::HashMap;
 use bevy::window::PrimaryWindow;
 use crate::camera::MainCamera;
 use crate::player::components::PlayerInput;
+use crate::utils::ndc::{screen_to_world, ScreenSize};
 
 pub fn keyboard_events(
     keys: Res<Input<KeyCode>>,
@@ -54,19 +55,8 @@ pub fn mouse_position(
         else { return; };
 
     let Some(screen_pos) = window.cursor_position() else { return; };
-    let window_size = Vec2::new(window.width(), window.height());
 
-    if window_size.x == 0. || window_size.y == 0. { return; }
-
-    // convert screen position [0..resolution] to ndc [-1..1] (gpu coordinates)
-    let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
-
-    // matrix for undoing the projection and camera transform
-    let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
-
-    // use it to convert ndc to world-space coordinates
-    let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
-    input.mouse_pos = world_pos.truncate();
+    input.mouse_pos = screen_to_world(screen_pos, window.screen_size(), camera, camera_transform);
 }
 
 pub fn mouse_click(

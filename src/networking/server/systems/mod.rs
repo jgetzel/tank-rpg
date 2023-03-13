@@ -1,6 +1,6 @@
 pub mod ui;
 
-use bevy::prelude::{Children, Commands, Entity, EventReader, EventWriter, GlobalTransform, NextState, Query, Res, ResMut, Transform, With};
+use bevy::prelude::{Children, Commands, EventReader, EventWriter, GlobalTransform, NextState, Query, Res, ResMut, Transform, With};
 use bevy::log::info;
 use std::mem::size_of;
 use std::net::Ipv4Addr;
@@ -23,7 +23,7 @@ use crate::networking::server::SERVER_PORT;
 use crate::networking::server::systems::ui::ServerVisualizer;
 use crate::object::{ObjectId, SyncedObjects};
 use crate::object::components::Object;
-use crate::player::{OnKillEvent, Player, PlayerTurret};
+use crate::player::{OnHealthChangedEvent, OnKillEvent, Player, PlayerTurret};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
 use crate::utils::TryInsertExt;
@@ -109,16 +109,32 @@ pub fn update_kill_death_count(
             attacker_data.kills += 1;
             server.endpoint().broadcast_message_on(
                 ChannelId::UnorderedReliable,
-                ServerMessage::LobbyUpdate { player_id: e.attacker_id, data: attacker_data.clone() },
+                ServerMessage::PlayerDataUpdate { player_id: e.attacker_id, data: attacker_data.clone() },
             ).unwrap();
         }
         if let Some(victim_data) = lobby.player_data.get_mut(&e.victim_id) {
             victim_data.deaths += 1;
             server.endpoint().broadcast_message_on(
                 ChannelId::UnorderedReliable,
-                ServerMessage::LobbyUpdate { player_id: e.victim_id, data: victim_data.clone() },
+                ServerMessage::PlayerDataUpdate { player_id: e.victim_id, data: victim_data.clone() },
             ).unwrap();
         }
+    });
+}
+
+pub fn update_health(
+    server: Res<Server>,
+    mut health_events: EventReader<OnHealthChangedEvent>
+) {
+    health_events.iter().for_each(|e| {
+       server.endpoint().broadcast_message_on(
+           ChannelId::Unreliable,
+           ServerMessage::HealthUpdate {
+               object_id: e.object_id,
+               health: e.health,
+               max_health: e.max_health,
+           }
+       ).unwrap();
     });
 }
 

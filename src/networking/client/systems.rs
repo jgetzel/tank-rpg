@@ -1,15 +1,16 @@
-use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, NextState, Res, ResMut};
+use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, NextState, Query, Res, ResMut};
 use bevy::log::info;
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::player::components::PlayerInput;
 use crate::networking::{Lobby, PlayerData};
-use crate::networking::client::{ClientId, ClientMessage, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerLeaveEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
+use crate::networking::client::{ClientId, ClientMessage, RecvHealthUpdateEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerLeaveEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
 use crate::networking::messages::*;
 use crate::object::{Object, SyncedObjects};
 use crate::networking::client::RecvPlayerSpawnEvent;
 use crate::networking::events::OnPlayerSpawnEvent;
+use crate::player::Health;
 use crate::prefabs::{get_player_bundle, get_turret_bundle};
 use crate::scenes::AppState;
 use crate::utils::despawn::CustomDespawnExt;
@@ -29,13 +30,22 @@ pub fn client_recv(
     mut client: ResMut<Client>,
     (mut you_joined_event, mut join_event, mut leave_event):
     (
-        EventWriter<RecvYouConnectEvent>, EventWriter<RecvPlayerConnectEvent>, EventWriter<RecvPlayerLeaveEvent>,
+        EventWriter<RecvYouConnectEvent>,
+        EventWriter<RecvPlayerConnectEvent>,
+        EventWriter<RecvPlayerLeaveEvent>,
     ),
-    mut despawn_event: EventWriter<RecvObjectDespawnEvent>,
-    mut spawn_event: EventWriter<RecvPlayerSpawnEvent>,
-    mut phys_update_event: EventWriter<RecvPhysObjUpdateEvent>,
+    (mut despawn_event, mut spawn_event):
+    (
+        EventWriter<RecvObjectDespawnEvent>,
+        EventWriter<RecvPlayerSpawnEvent>
+    ),
+    (mut phys_update_event, mut health_update_event):
+    (
+        EventWriter<RecvPhysObjUpdateEvent>,
+        EventWriter<RecvHealthUpdateEvent>
+    ),
     mut turr_update_event: EventWriter<RecvTurretUpdateEvent>,
-    mut lobby: ResMut<Lobby>
+    mut lobby: ResMut<Lobby>,
 ) {
     while let Ok(Some(message)) = client.connection_mut().receive_message::<ServerMessage>() {
         match message {
@@ -54,13 +64,20 @@ pub fn client_recv(
             ServerMessage::ObjectDespawn { object_id } => {
                 despawn_event.send(RecvObjectDespawnEvent { object_id });
             }
-            ServerMessage::LobbyUpdate { player_id, data} => {
-                *lobby.player_data.get_mut(&player_id).unwrap() = data.clone();
-            }
             ServerMessage::PhysObjUpdate { objects } => {
                 objects.into_iter().for_each(|(id, data)| {
                     phys_update_event.send(RecvPhysObjUpdateEvent { id, data })
                 });
+            }
+            ServerMessage::HealthUpdate { object_id, health, max_health } => {
+                health_update_event.send(RecvHealthUpdateEvent {
+                    object_id,
+                    health,
+                    max_health,
+                });
+            }
+            ServerMessage::PlayerDataUpdate { player_id, data } => {
+                *lobby.player_data.get_mut(&player_id).unwrap() = data.clone();
             }
             ServerMessage::TurretRotationUpdate { turrets } => {
                 turrets.into_iter().for_each(|(parent_id, rotation)| {
@@ -138,8 +155,21 @@ pub fn on_player_spawn(
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id: e.player_id,
             object_id: e.object_id,
-            position: e.position
+            position: e.position,
         });
+    });
+}
+
+pub fn on_health_update(
+    mut events: EventReader<RecvHealthUpdateEvent>,
+    mut health_q: Query<&mut Health>,
+    objects: Res<SyncedObjects>,
+) {
+    events.iter().for_each(|e| {
+        let Some(&entity) = objects.objects.get(&e.object_id) else { return; };
+        let Ok(mut health) = health_q.get_mut(entity) else { return; };
+        health.max_health = e.max_health;
+        health.health = e.health;
     });
 }
 
@@ -154,6 +184,8 @@ pub fn on_object_despawn(
         }
     });
 }
+
+
 
 pub fn main_menu_on_load(
     mut evt: EventReader<AssetsLoadedEvent>,

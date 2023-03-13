@@ -2,7 +2,6 @@ use bevy::app::App;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::{egui, EguiContexts};
-use bevy_egui::egui::Align2;
 use crate::camera::MainCamera;
 use crate::player::Health;
 use crate::scenes::AppState;

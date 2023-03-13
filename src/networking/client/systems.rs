@@ -93,12 +93,12 @@ pub fn on_player_join(
 pub fn on_player_leave(
     mut leave_events: EventReader<RecvPlayerLeaveEvent>,
     mut commands: Commands,
-    lobby: ResMut<Lobby>,
+    mut lobby: ResMut<Lobby>,
     objects: ResMut<SyncedObjects>,
 ) {
     for ev in leave_events.iter() {
         info!("Player {} Disconnected", ev.player_id);
-        if let Some(data) = lobby.player_data.get(&ev.player_id) &&
+        if let Some(data) = lobby.player_data.remove(&ev.player_id) &&
             let Some(object_id) = data.object_id &&
             let Some(&entity) = objects.objects.get(&object_id) {
             commands.entity(entity).custom_despawn();

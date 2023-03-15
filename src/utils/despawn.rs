@@ -2,10 +2,10 @@ use bevy::ecs::system::{Command, EntityCommands};
 use bevy::prelude::{Entity, World};
 use bevy_quinnet::server::Server;
 use bevy::hierarchy::Children;
-use crate::networking::Lobby;
-use crate::networking::events::OnObjectDespawnEvent;
-use crate::object::{Object, SyncedObjects};
-use crate::player::Player;
+use crate::simulation::events::OnObjectDespawnEvent;
+use crate::simulation::server_sim::player::Player;
+use crate::simulation::{Object, SyncedObjects};
+use crate::utils::networking::Lobby;
 
 pub trait CustomDespawnExt {
     fn custom_despawn(self);

@@ -5,8 +5,8 @@ mod system;
 use bevy::app::{App, Plugin};
 use bevy::prelude::{IntoSystemAppConfigs, IntoSystemConfig, OnEnter, OnUpdate};
 use resources::*;
-use crate::asset_loader::components::SpriteEnum;
 use crate::AppState;
+use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::system::{check_assets_loaded, load_fonts, load_sprites};
 
 pub struct AssetLoaderPlugin;

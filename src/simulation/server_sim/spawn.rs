@@ -5,7 +5,7 @@ use bevy::hierarchy::BuildChildren;
 use crate::ServerSet::ServerUpdate;
 use crate::simulation::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent, OnRespawnTimerFinish};
 use crate::simulation::server_sim::player::Player;
-use crate::simulation::{Object, SyncedObjects};
+use crate::simulation::{Object, PlayerData, SyncedObjects};
 use crate::simulation::Lobby;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
@@ -55,7 +55,12 @@ pub fn spawn_player_system(
 
         objects.objects.insert(new_object.id, player_entity);
 
-        lobby.update_object_id(player_id, new_object.id).unwrap();
+        if lobby.player_data.contains_key(&player_id) {
+            lobby.update_object_id(player_id, new_object.id).unwrap();
+        }
+        else {
+            lobby.player_data.insert(player_id, PlayerData::new(new_object.id));
+        }
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id,

@@ -46,7 +46,8 @@ impl Plugin for ClientExecutablePlugin {
         app
             .add_plugin(DefaultExecutablePlugin)
             .add_plugin(ClientUIPlugin)
-            .add_plugin(ClientNetworkingPlugin);
+            .add_plugin(ClientNetworkingPlugin)
+            .add_plugin(ServerNetworkingPlugin);
     }
 }
 
@@ -84,7 +85,8 @@ impl Plugin for DefaultExecutablePlugin {
             .configure_set(ServerSend
                 .run_if(is_server_listening))
             .configure_set(ClientReceive.before(ClientUpdate).run_if(is_client_connected))
-            .configure_set(ClientUpdate.before(ClientSend).run_if(is_client_connected))
+            .configure_set(ClientUpdate.before(ClientSend)
+                .run_if(is_client_connected.and_then(not(is_server_listening))))
             .configure_set(ClientSend.run_if(is_client_connected));
 
         #[cfg(debug_assertions)]

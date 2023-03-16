@@ -1,15 +1,18 @@
-use bevy::prelude::{Commands, EventReader, EventWriter, NextState, Res, ResMut};
+use bevy::prelude::{Commands, EventReader, EventWriter, NextState, ResMut};
 use bevy_quinnet::client::connection::{ConnectionConfiguration, ConnectionEvent};
 use bevy_quinnet::client::Client;
 use bevy::log::info;
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use bevy_quinnet::client::certificate::CertificateVerificationMode;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Align2, RichText};
 use std::str::FromStr;
+use bevy_quinnet::server::{Server, ServerConfiguration};
+use bevy_quinnet::server::certificate::CertificateRetrievalMode;
 use crate::AppState;
-use crate::client_ui::main_menu::{ConnectState, OnAttemptConnect, OnAttemptHost, ServerIPInput, ServerPortInput};
+use crate::client_ui::main_menu::{ConnectState, OnConnectAttempt, OnHostAttempt, ServerIPInput, ServerPortInput};
 use crate::client_ui::main_menu::ui::{CENTER_WIDTH, MAIN_MENU_FRAME, MainMenuExt};
+use crate::server_networking::{DEFAULT_SERVER_HOSTNAME};
 use crate::utils::prefabs::default_camera;
 
 pub fn init(mut commands: Commands) {
@@ -20,8 +23,8 @@ pub fn main_menu_gui(
     mut contexts: EguiContexts,
     mut server_ip_string: ResMut<ServerIPInput>,
     mut server_port_string: ResMut<ServerPortInput>,
-    connect_writer: EventWriter<OnAttemptConnect>,
-    host_writer: EventWriter<OnAttemptHost>,
+    connect_writer: EventWriter<OnConnectAttempt>,
+    host_writer: EventWriter<OnHostAttempt>,
 ) {
     egui::Area::new("Main Menu Center Area")
         .anchor(Align2::CENTER_CENTER, [0., 0.])
@@ -43,31 +46,62 @@ pub fn main_menu_gui(
 }
 
 pub fn connecting_gui(
-    mut egui_ctx: EguiContexts,
+    mut contexts: EguiContexts,
 ) {
-    egui::Window::new("Connecting...")
+    egui::Area::new("Main Menu Connecting Area")
         .anchor(Align2::CENTER_CENTER, [0., 0.])
-        .collapsible(false)
-        .show(egui_ctx.ctx_mut(), |_| {});
+        .show(contexts.ctx_mut(), |ui| {
+            ui.label(RichText::new("Connecting...").heading());
+        });
 }
 
-pub fn connect_attempt_event_listener(
-    mut events: EventReader<OnAttemptConnect>,
-    server_address: Res<ServerIPInput>,
+pub fn connect_attempt_listener(
+    mut events: EventReader<OnConnectAttempt>,
     mut next_state: ResMut<NextState<ConnectState>>,
     mut client: ResMut<Client>,
 ) {
-    if events.iter().next().is_some() {
-        info!("Connection attempt tried!");
+    events.iter().for_each(|e| {
+        info!("Attempting to connect to Socket Address {}...", e.address.to_string());
         next_state.set(ConnectState::Connecting);
         client.open_connection(
             ConnectionConfiguration::from_addrs(
-                SocketAddr::from_str(server_address.0.as_str()).unwrap(),
-                SocketAddr::from_str("0.0.0.0:0").unwrap()
+                e.address,
+                SocketAddr::from_str("0.0.0.0:0").unwrap(),
             ),
-            CertificateVerificationMode::SkipVerification
+            CertificateVerificationMode::SkipVerification,
         ).unwrap();
-    }
+    });
+}
+
+pub fn host_attempt_listener(
+    mut events: EventReader<OnHostAttempt>,
+    mut next_state: ResMut<NextState<ConnectState>>,
+    mut client: ResMut<Client>,
+    mut server: ResMut<Server>,
+) {
+    events.iter().for_each(|e| {
+        info!("Attempting to host on port {}...", e.port_num);
+        next_state.set(ConnectState::StartingServer);
+
+        server.start_endpoint(
+            ServerConfiguration::from_ip(
+                Ipv4Addr::new(0, 0, 0, 0).into(), e.port_num),
+            CertificateRetrievalMode::GenerateSelfSigned {
+                server_hostname: DEFAULT_SERVER_HOSTNAME.to_string()
+            },
+        ).unwrap();
+
+        client.open_connection(
+            ConnectionConfiguration::from_addrs(
+                SocketAddr::new(
+                    Ipv4Addr::from_str("127.0.0.1").unwrap().into(),
+                    e.port_num,
+                ),
+                SocketAddr::from_str("0.0.0.0:0").unwrap(),
+            ),
+            CertificateVerificationMode::SkipVerification,
+        ).unwrap();
+    })
 }
 
 pub fn in_game_on_connect(

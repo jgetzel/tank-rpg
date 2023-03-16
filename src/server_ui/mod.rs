@@ -1,10 +1,14 @@
 use bevy::app::App;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
-use bevy_quinnet::server::{ConnectionEvent, ConnectionLostEvent, Server};
+use bevy_quinnet::server::{ConnectionEvent, ConnectionLostEvent, Server, ServerConfiguration};
 use bevy_egui::egui::Align2;
 use local_ip_address::local_ip;
-use crate::server_networking::DEFAULT_SERVER_PORT;
+use std::net::Ipv4Addr;
+use bevy_quinnet::server::certificate::CertificateRetrievalMode;
+use crate::AppState;
+use crate::asset_loader::AssetsLoadedEvent;
+use crate::server_networking::{DEFAULT_SERVER_HOSTNAME, DEFAULT_SERVER_PORT};
 use crate::server_ui::network_visualizer::ServerVisualizer;
 use crate::simulation::Lobby;
 use crate::utils::networking::is_server_listening;
@@ -15,8 +19,28 @@ pub struct ServerUIPlugin;
 
 impl Plugin for ServerUIPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(server_stats_egui.run_if(is_server_listening));
+        app
+            .add_system(in_game_on_load.in_set(OnUpdate(AppState::Loading)))
+            .add_system(server_start_listening.in_schedule(OnEnter(AppState::InGame)))
+            .add_system(server_stats_egui.run_if(is_server_listening));
     }
+}
+
+pub fn in_game_on_load(
+    mut evt: EventReader<AssetsLoadedEvent>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if evt.iter().next().is_some() {
+        next_state.set(AppState::InGame);
+    }
+}
+
+pub fn server_start_listening(mut server: ResMut<Server>) {
+
+    server.start_endpoint(
+        ServerConfiguration::from_ip(Ipv4Addr::new(0, 0, 0, 0).into(), DEFAULT_SERVER_PORT),
+        CertificateRetrievalMode::GenerateSelfSigned { server_hostname: DEFAULT_SERVER_HOSTNAME.to_string() },
+    ).unwrap();
 }
 
 pub fn server_stats_egui(

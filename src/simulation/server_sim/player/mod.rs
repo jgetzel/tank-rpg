@@ -8,7 +8,7 @@ use bevy::app::App;
 pub use components::*;
 use bevy::prelude::*;
 use crate::ServerSet::ServerUpdate;
-use crate::utils::messages::PlayerId;
+use crate::utils::networking::messages::PlayerId;
 use crate::simulation::ObjectId;
 
 pub struct PlayerPlugin;

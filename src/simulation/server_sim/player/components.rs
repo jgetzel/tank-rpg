@@ -2,7 +2,7 @@ use bevy::prelude::{Component, Entity, Reflect, Resource};
 use bevy::math::Vec2;
 use serde::{Deserialize, Serialize};
 use crate::client_networking::ClientInput;
-use crate::utils::messages::PlayerId;
+use crate::utils::networking::messages::PlayerId;
 
 #[derive(Component)]
 pub struct You;

@@ -6,7 +6,7 @@ use crate::simulation::server_sim::physics::PhysicsPlugin;
 use crate::simulation::server_sim::player::PlayerPlugin;
 use crate::simulation::server_sim::respawn::RespawnPlugin;
 use crate::simulation::server_sim::spawn::SpawnPlugin;
-use crate::utils::CustomDespawnExt;
+use crate::utils::commands::despawn::CustomDespawnExt;
 
 pub mod player;
 pub mod bullet;

@@ -4,9 +4,10 @@ use bevy_egui::{egui, EguiContexts};
 use bevy_quinnet::server::{ConnectionEvent, ConnectionLostEvent, Server};
 use bevy_egui::egui::Align2;
 use local_ip_address::local_ip;
-use crate::server_networking::SERVER_PORT;
+use crate::server_networking::DEFAULT_SERVER_PORT;
 use crate::server_ui::network_visualizer::ServerVisualizer;
-use crate::utils::networking::{is_server_listening, Lobby};
+use crate::simulation::Lobby;
+use crate::utils::networking::is_server_listening;
 
 mod network_visualizer;
 
@@ -48,7 +49,7 @@ pub fn server_stats_egui(
         .show(egui_ctx.ctx_mut(), |ui| {
             ui.horizontal(|ui| {
                 ui.label("Server IP:");
-                let server_ip = format!("{}:{}", local_ip().unwrap(), SERVER_PORT);
+                let server_ip = format!("{}:{}", local_ip().unwrap(), DEFAULT_SERVER_PORT);
                 ui.monospace(server_ip.clone());
                 if ui.small_button("📋").clicked() {
                     ui.output_mut(|o| o.copied_text = server_ip);

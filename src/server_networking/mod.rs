@@ -7,7 +7,7 @@ use crate::AppState;
 use crate::ServerSet::*;
 use crate::server_networking::systems::*;
 
-pub const SERVER_PORT: u16 = 1337;
+pub const DEFAULT_SERVER_PORT: u16 = 1337;
 
 pub struct ServerNetworkingPlugin;
 

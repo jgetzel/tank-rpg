@@ -1,5 +1,7 @@
 use bevy::app::App;
-use bevy::prelude::Plugin;
+use bevy::prelude::{EventReader, IntoSystemConfig, NextState, OnUpdate, Plugin, ResMut};
+use crate::AppState;
+use crate::asset_loader::AssetsLoadedEvent;
 use crate::client_ui::client_debug::ClientDebugUIPlugin;
 use crate::client_ui::health::HealthUiPlugin;
 use crate::client_ui::leaderboard::LeaderboardUIPlugin;
@@ -19,7 +21,19 @@ impl Plugin for ClientUIPlugin {
             .add_plugin(HealthUiPlugin)
             .add_plugin(LeaderboardUIPlugin);
 
+        app.add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
+
         #[cfg(debug_assertions)]
         app.add_plugin(ClientDebugUIPlugin);
+    }
+}
+
+
+pub fn main_menu_on_load(
+    mut evt: EventReader<AssetsLoadedEvent>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if evt.iter().next().is_some() {
+        next_state.set(AppState::MainMenu);
     }
 }

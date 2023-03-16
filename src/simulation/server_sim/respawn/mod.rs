@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::ServerSet::ServerUpdate;
 use crate::simulation::events::OnRespawnTimerFinish;
 use crate::simulation::server_sim::bullet::BulletSystemStage::CollisionHandle;
-use crate::utils::messages::PlayerId;
+use crate::utils::networking::messages::PlayerId;
 
 mod systems;
 

@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::Align2;
 use crate::AppState;
-use crate::utils::messages::PlayerId;
-use crate::utils::networking::{Lobby, PlayerData};
+use crate::simulation::Lobby;
+use crate::utils::networking::messages::PlayerId;
+use crate::simulation::PlayerData;
 
 pub struct LeaderboardUIPlugin;
 

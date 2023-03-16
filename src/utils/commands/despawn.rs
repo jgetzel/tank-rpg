@@ -5,7 +5,7 @@ use bevy::hierarchy::Children;
 use crate::simulation::events::OnObjectDespawnEvent;
 use crate::simulation::server_sim::player::Player;
 use crate::simulation::{Object, SyncedObjects};
-use crate::utils::networking::Lobby;
+use crate::simulation::Lobby;
 
 pub trait CustomDespawnExt {
     fn custom_despawn(self);

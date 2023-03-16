@@ -6,7 +6,7 @@ use crate::ServerSet::ServerUpdate;
 use crate::simulation::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent, OnRespawnTimerFinish};
 use crate::simulation::server_sim::player::Player;
 use crate::simulation::{Object, SyncedObjects};
-use crate::utils::networking::Lobby;
+use crate::simulation::Lobby;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
 pub struct SpawnPlugin;

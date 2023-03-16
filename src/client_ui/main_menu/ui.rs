@@ -54,7 +54,7 @@ impl MainMenuExt for Ui {
     fn host_menu(&mut self, server_port: &mut String, mut host_writer: EventWriter<OnAttemptHost>) {
         self.vertical_centered(|ui| {
             ui.menu_button(RichText::new("Host Server").heading(), |ui| {
-                ui.label("Enter Server IP:");
+                ui.label("Enter Port Number:");
                 ui.horizontal_top(|ui| {
                     ui.add(egui::TextEdit::singleline(server_port)
                         .hint_text(DEFAULT_SERVER_PORT.to_string()));

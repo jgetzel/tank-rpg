@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use bevy::app::App;
 use bevy::prelude::*;
 use crate::AppState;
@@ -15,14 +16,16 @@ impl Plugin for MainMenuPlugin {
             .insert_resource(ServerIPInput("".into()))
             .insert_resource(ServerPortInput("".into()))
             .add_state::<ConnectState>()
-            .add_event::<OnAttemptConnect>()
-            .add_event::<OnAttemptHost>()
+            .add_event::<OnConnectAttempt>()
+            .add_event::<OnHostAttempt>()
             .add_system(systems::init.in_schedule(OnEnter(AppState::MainMenu)))
             .add_systems(
                 (
                     systems::main_menu_gui.run_if(in_state(ConnectState::NotConnected)),
-                    systems::connecting_gui.run_if(in_state(ConnectState::Connecting)),
-                    systems::connect_attempt_event_listener,
+                    systems::connecting_gui.run_if(in_state(ConnectState::Connecting)
+                        .or_else(in_state(ConnectState::StartingServer))),
+                    systems::connect_attempt_listener,
+                    systems::host_attempt_listener,
                     systems::in_game_on_connect
                 ).in_set(OnUpdate(AppState::MainMenu))
             )
@@ -36,13 +39,18 @@ pub struct ServerIPInput(pub String);
 #[derive(Resource)]
 pub struct ServerPortInput(pub String);
 
-pub struct OnAttemptConnect;
+pub struct OnConnectAttempt {
+    pub address: SocketAddr
+}
 
-pub struct OnAttemptHost;
+pub struct OnHostAttempt {
+    pub port_num: u16
+}
 
 #[derive(States, Default, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ConnectState {
     #[default]
     NotConnected,
     Connecting,
+    StartingServer,
 }

@@ -144,7 +144,7 @@ pub fn on_client_connect(
     mut connection_events: EventReader<ConnectionEvent>,
     mut spawn_event_writer: EventWriter<OnPlayerConnectEvent>,
     server: Res<Server>,
-    mut lobby: ResMut<Lobby>,
+    lobby: Res<Lobby>,
     player_query: Query<(&GlobalTransform, &Object), With<Player>>,
 ) {
     for &ConnectionEvent { id } in connection_events.iter() {
@@ -171,7 +171,7 @@ pub fn on_client_connect(
             ).unwrap();
 
             if let Some(object_id) = data.object_id {
-                //TODO inefficient linear search, add objects map to server_networking as well?
+                //TODO inefficient linear search, add objects map to server_sim as well?
                 let position = player_query.iter()
                     .find(|(_, obj)| obj.id == object_id)
                     .unwrap().0.translation().truncate();
@@ -183,8 +183,6 @@ pub fn on_client_connect(
                 ).unwrap();
             }
         }
-
-        lobby.player_data.insert(id, PlayerData::default());
 
         spawn_event_writer.send(OnPlayerConnectEvent {
             player_id: id,

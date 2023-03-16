@@ -29,23 +29,14 @@ impl Plugin for ClientNetworkingPlugin {
             .add_event::<RecvObjectDespawnEvent>()
             .add_event::<RecvHealthUpdateEvent>()
             .add_event::<RecvPhysObjUpdateEvent>()
+            .add_event::<RecvPlayerDataUpdateEvent>()
             .add_event::<RecvTurretUpdateEvent>()
             .add_systems(
                 (
                     client_recv.in_set(ClientReceive),
                     client_send.in_set(ClientSend)
                 )
-            )
-            .add_systems(
-                (
-                    on_you_joined,
-                    on_player_join,
-                    on_player_leave,
-                    on_player_spawn,
-                    on_health_update,
-                ).in_set(ClientUpdate).before(on_object_despawn)
-            )
-            .add_system(on_object_despawn.in_set(ClientUpdate));
+            );
     }
 }
 
@@ -81,6 +72,11 @@ pub struct RecvHealthUpdateEvent {
 pub struct RecvPhysObjUpdateEvent {
     pub id: ObjectId,
     pub data: PhysicsObjData,
+}
+
+pub struct RecvPlayerDataUpdateEvent {
+    pub id: PlayerId,
+    pub data: PlayerData
 }
 
 pub struct RecvTurretUpdateEvent {

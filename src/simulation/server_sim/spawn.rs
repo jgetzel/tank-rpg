@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry::Vacant;
 use bevy::app::App;
 use bevy::prelude::{Commands, Component, EventReader, EventWriter, GlobalTransform, IntoSystemConfig, Plugin, Query, ResMut, With};
 use bevy::log::info;
@@ -31,8 +32,10 @@ pub fn spawn_player_system(
     mut lobby: ResMut<Lobby>,
     mut objects: ResMut<SyncedObjects>,
 ) {
-    let events = join_events.iter().map(|e| e.player_id)
+    let events =
+        join_events.iter().map(|e| e.player_id)
         .chain(respawn_events.iter().map(|e| e.player_id));
+
     events.for_each(|player_id| {
         info!("Player {} Spawned", player_id);
 
@@ -55,11 +58,10 @@ pub fn spawn_player_system(
 
         objects.objects.insert(new_object.id, player_entity);
 
-        if lobby.player_data.contains_key(&player_id) {
+        if let Vacant(entry) = lobby.player_data.entry(player_id) {
+            entry.insert(PlayerData::new(new_object.id));
+        } else {
             lobby.update_object_id(player_id, new_object.id).unwrap();
-        }
-        else {
-            lobby.player_data.insert(player_id, PlayerData::new(new_object.id));
         }
 
         spawn_writer.send(OnPlayerSpawnEvent {

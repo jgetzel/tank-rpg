@@ -3,7 +3,7 @@ use bevy::prelude::{Vec3, Vec2, Quat};
 use bevy::utils::HashMap;
 use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::ObjectId;
-use crate::utils::networking::PlayerData;
+use crate::simulation::PlayerData;
 
 pub type PlayerId = u64;
 

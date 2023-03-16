@@ -1,11 +1,13 @@
 use bevy::app::App;
-use bevy::prelude::{Component, Entity, Plugin, Resource};
+use bevy::prelude::{Component, default, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use crate::utils::networking::Lobby;
+use std::collections;
+use serde::{Deserialize, Serialize};
 use crate::simulation::events::*;
 use crate::simulation::client_sim::ClientSimulationPlugin;
 use crate::simulation::server_sim::ServerSimulationPlugin;
+use crate::utils::networking::messages::PlayerId;
 
 pub mod events;
 pub mod client_sim;
@@ -56,5 +58,43 @@ impl Object {
 impl Default for Object {
     fn default() -> Self {
         Object::new()
+    }
+}
+
+#[derive(Debug, Default, Resource)]
+pub struct Lobby {
+    pub player_data: collections::HashMap<PlayerId, PlayerData>,
+}
+
+impl Lobby {
+    pub fn update_object_id(&mut self, player_id: PlayerId, object_id: ObjectId) -> Result<(), String> {
+        if let Some(mut data) = self.player_data.get_mut(&player_id) {
+            if data.object_id.is_some() {
+                return Err(format!("Attempted to update object ID for Player {}, \
+                but they were already connected to another object!", player_id));
+            }
+            data.object_id = Some(object_id);
+            Ok(())
+        }
+        else {
+            self.player_data.insert(player_id, PlayerData::new(object_id));
+            Ok(())
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PlayerData {
+    pub object_id: Option<ObjectId>,
+    pub kills: u32,
+    pub deaths: u32,
+}
+
+impl PlayerData {
+    pub fn new(object_id: ObjectId) -> Self {
+        PlayerData {
+            object_id: Some(object_id),
+            ..default()
+        }
     }
 }

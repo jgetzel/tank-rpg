@@ -65,7 +65,7 @@ struct DefaultExecutablePlugin;
 
 impl Plugin for DefaultExecutablePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(BevyDefaultPlugins);
+        app.add_plugins(BevyDefaultPlugins { headless: is_headless()});
 
         app.add_state::<AppState>();
 
@@ -117,7 +117,9 @@ pub enum ServerSet {
     ServerSend,
 }
 
-struct BevyDefaultPlugins;
+struct BevyDefaultPlugins {
+    pub headless: bool
+}
 
 impl PluginGroup for BevyDefaultPlugins {
     fn build(self) -> PluginGroupBuilder {
@@ -134,8 +136,7 @@ impl PluginGroup for BevyDefaultPlugins {
             .add(AssetPlugin::default())
             .add(ScenePlugin::default());
 
-        let headless = is_headless();
-        if headless {
+        if self.headless {
             group = group.add(ScheduleRunnerPlugin::default());
         } else {
             group = group.add(InputPlugin::default())

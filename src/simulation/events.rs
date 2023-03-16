@@ -1,5 +1,5 @@
 use bevy::math::Vec2;
-use crate::utils::messages::PlayerId;
+use crate::utils::networking::messages::PlayerId;
 use crate::simulation::ObjectId;
 
 pub struct OnObjectDespawnEvent {

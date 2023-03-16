@@ -1,17 +1,15 @@
-use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, NextState, Query, Res, ResMut};
+use bevy::prelude::{BuildChildren, Commands, EventReader, EventWriter, Query, Res, ResMut};
 use bevy::log::info;
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
-use crate::AppState;
-use crate::asset_loader::AssetsLoadedEvent;
 use crate::client_networking::{ClientId, ClientMessage, RecvHealthUpdateEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
 use crate::client_networking::client_input::ClientInput;
-use crate::utils::messages::*;
+use crate::utils::networking::messages::*;
 use crate::simulation::events::OnPlayerSpawnEvent;
 use crate::simulation::server_sim::player::Health;
-use crate::simulation::{Object, SyncedObjects};
-use crate::utils::despawn::CustomDespawnExt;
-use crate::utils::networking::{Lobby, PlayerData};
+use crate::simulation::{Lobby, Object, SyncedObjects};
+use crate::utils::commands::despawn::CustomDespawnExt;
+use crate::simulation::PlayerData;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
 pub fn client_send(
@@ -182,15 +180,4 @@ pub fn on_object_despawn(
             commands.entity(ent).custom_despawn();
         }
     });
-}
-
-
-
-pub fn main_menu_on_load(
-    mut evt: EventReader<AssetsLoadedEvent>,
-    mut next_state: ResMut<NextState<AppState>>,
-) {
-    if evt.iter().next().is_some() {
-        next_state.set(AppState::MainMenu);
-    }
 }

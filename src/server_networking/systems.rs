@@ -11,17 +11,17 @@ use bevy_quinnet::shared::channel::ChannelId;
 use crate::AppState;
 use crate::asset_loader::AssetsLoadedEvent;
 use crate::asset_loader::components::SpriteEnum;
-use crate::utils::networking::{Lobby, PlayerData};
+use crate::simulation::PlayerData;
 use crate::client_networking::ClientMessage;
 use crate::simulation::events::{OnObjectDespawnEvent, OnPlayerConnectEvent, OnPlayerSpawnEvent};
-use crate::utils::messages::{PhysicsObjData, ServerMessage};
-use crate::server_networking::SERVER_PORT;
-use crate::simulation::ObjectId;
+use crate::utils::networking::messages::{PhysicsObjData, ServerMessage};
+use crate::server_networking::DEFAULT_SERVER_PORT;
+use crate::simulation::{Lobby, ObjectId};
 use crate::simulation::Object;
 use crate::simulation::server_sim::player::{OnHealthChangedEvent, OnKillEvent, Player, PlayerInput, PlayerTurret};
 use crate::simulation::SyncedObjects;
-use crate::utils::despawn::CustomDespawnExt;
-use crate::utils::TryInsertExt;
+use crate::utils::commands::despawn::CustomDespawnExt;
+use crate::utils::commands::try_insert::TryInsertExt;
 
 pub fn server_recv(
     mut server: ResMut<Server>,
@@ -146,7 +146,7 @@ pub fn server_start_listening(mut server: ResMut<Server>) {
     const SERVER_HOSTNAME: &str = "TankRPGHost";
 
     server.start_endpoint(
-        ServerConfiguration::from_ip(Ipv4Addr::new(0, 0, 0, 0).into(), SERVER_PORT),
+        ServerConfiguration::from_ip(Ipv4Addr::new(0, 0, 0, 0).into(), DEFAULT_SERVER_PORT),
         CertificateRetrievalMode::GenerateSelfSigned { server_hostname: SERVER_HOSTNAME.to_string() },
     ).unwrap();
 }

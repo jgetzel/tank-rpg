@@ -2,14 +2,14 @@ use bevy::prelude::*;
 use bevy_rapier2d::geometry::Collider;
 use bevy_rapier2d::prelude::{ActiveEvents, CollisionEvent, RigidBody, Sensor, Velocity};
 use crate::asset_loader::components::SpriteEnum;
-use crate::utils::networking::Lobby;
+use crate::simulation::Lobby;
 use crate::simulation::server_sim::player::components::PlayerInput;
 use crate::display::sprite_updater::BULLET_LAYER;
 use crate::simulation::Object;
 use crate::simulation::server_sim::player::components::{Player, PlayerTurret};
 use crate::simulation::server_sim::player::{OnPlayerDeathEvent, Health, OnKillEvent, OnHealthChangedEvent};
 use crate::simulation::server_sim::bullet::BulletSystemStage::{CollisionHandle, CollisionSend};
-use crate::utils::despawn::CustomDespawnExt;
+use crate::utils::commands::despawn::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 60.;

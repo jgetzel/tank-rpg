@@ -7,12 +7,11 @@ use bevy::prelude::*;
 use bevy::app::{App, Plugin};
 use bevy_quinnet::client::QuinnetClientPlugin;
 use serde::{Deserialize, Serialize};
-use crate::AppState;
 use crate::client_networking::client_input::ClientInputPlugin;
 use crate::ClientSet::*;
 use crate::client_networking::systems::*;
-use crate::utils::messages::{PhysicsObjData, PlayerId};
-use crate::utils::networking::PlayerData;
+use crate::utils::networking::messages::{PhysicsObjData, PlayerId};
+use crate::simulation::PlayerData;
 use crate::simulation::ObjectId;
 
 pub struct ClientNetworkingPlugin;
@@ -46,8 +45,7 @@ impl Plugin for ClientNetworkingPlugin {
                     on_health_update,
                 ).in_set(ClientUpdate).before(on_object_despawn)
             )
-            .add_system(on_object_despawn.in_set(ClientUpdate))
-            .add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
+            .add_system(on_object_despawn.in_set(ClientUpdate));
     }
 }
 

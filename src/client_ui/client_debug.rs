@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 use crate::AppState;
 use crate::simulation::SyncedObjects;
-use crate::utils::networking::Lobby;
+use crate::simulation::Lobby;
 
 pub struct ClientDebugUIPlugin;
 

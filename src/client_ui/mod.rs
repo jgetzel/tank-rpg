@@ -6,11 +6,13 @@ use crate::client_ui::client_debug::ClientDebugUIPlugin;
 use crate::client_ui::health::HealthUiPlugin;
 use crate::client_ui::leaderboard::LeaderboardUIPlugin;
 use crate::client_ui::main_menu::MainMenuPlugin;
+use crate::client_ui::match_length::MatchLengthUIPlugin;
 
-pub mod client_debug;
-pub mod health;
-pub mod leaderboard;
-pub mod main_menu;
+mod client_debug;
+mod health;
+mod leaderboard;
+mod main_menu;
+mod match_length;
 
 pub struct ClientUIPlugin;
 
@@ -19,7 +21,8 @@ impl Plugin for ClientUIPlugin {
         app
             .add_plugin(MainMenuPlugin)
             .add_plugin(HealthUiPlugin)
-            .add_plugin(LeaderboardUIPlugin);
+            .add_plugin(LeaderboardUIPlugin)
+            .add_plugin(MatchLengthUIPlugin);
 
         app.add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
 

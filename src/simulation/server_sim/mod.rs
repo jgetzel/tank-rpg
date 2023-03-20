@@ -2,6 +2,7 @@ use bevy::app::App;
 use bevy::prelude::{Commands, Plugin, Window, World};
 use crate::simulation::server_sim::bullet::BulletPlugin;
 use crate::simulation::server_sim::init::InitPlugin;
+use crate::simulation::server_sim::match_ffa::MatchFFAPlugin;
 use crate::simulation::server_sim::physics::PhysicsPlugin;
 use crate::simulation::server_sim::player::PlayerPlugin;
 use crate::simulation::server_sim::respawn::RespawnPlugin;
@@ -13,6 +14,7 @@ pub mod bullet;
 pub mod physics;
 pub mod respawn;
 pub mod spawn;
+pub mod match_ffa;
 pub mod init;
 
 pub struct ServerSimulationPlugin;
@@ -21,6 +23,7 @@ impl Plugin for ServerSimulationPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugin(InitPlugin)
+            .add_plugin(MatchFFAPlugin)
             .add_plugin(PlayerPlugin)
             .add_plugin(BulletPlugin)
             .add_plugin(PhysicsPlugin)

@@ -231,9 +231,10 @@ pub fn on_player_spawn(
 }
 
 pub fn update_match_timer(
-    match_timer: ResMut<MatchTimer>,
+    match_timer: Option<ResMut<MatchTimer>>,
     server: Res<Server>,
 ) {
+    let Some(match_timer) = match_timer else { return; };
     server.endpoint().broadcast_message_on(
         ChannelId::UnorderedReliable,
         ServerMessage::MatchTimerMsg { time_remaining: match_timer.time_remaining }

@@ -3,28 +3,50 @@ use bevy::app::App;
 use bevy::prelude::{Commands, Component, EventReader, EventWriter, GlobalTransform, IntoSystemConfig, Plugin, Query, ResMut, With};
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
+use bevy::utils::HashSet;
 use crate::ServerSet::ServerUpdate;
 use crate::simulation::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent, OnRespawnTimerFinish};
 use crate::simulation::server_sim::player::Player;
 use crate::simulation::{Object, PlayerData, SyncedObjects};
 use crate::simulation::Lobby;
+use crate::simulation::server_sim::init::OnInitEvent;
+use crate::utils::networking::messages::PlayerId;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
 pub struct SpawnPlugin;
 
 impl Plugin for SpawnPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(spawn_player_system.in_set(ServerUpdate));
+        app
+            .add_systems(
+                (
+                    lobby_players_on_connect.before(spawn_player_system),
+                    spawn_player_system.in_set(ServerUpdate)
+                )
+            );
     }
 }
 
 #[derive(Component)]
 pub struct SpawnPoint;
 
+
+pub fn lobby_players_on_connect(
+    mut join_events: EventReader<OnPlayerConnectEvent>,
+    mut lobby: ResMut<Lobby>,
+) {
+    join_events.iter().for_each(|e| {
+        let Vacant(entry) = lobby.player_data.entry(e.player_id)
+            else { return; };
+        entry.insert(PlayerData::default());
+    });
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn spawn_player_system(
     mut join_events: EventReader<OnPlayerConnectEvent>,
     mut respawn_events: EventReader<OnRespawnTimerFinish>,
+    mut init_events: EventReader<OnInitEvent>,
     mut spawn_writer: EventWriter<OnPlayerSpawnEvent>,
     spawn_points: Query<&GlobalTransform, With<SpawnPoint>>,
     players: Query<&GlobalTransform, With<Player>>,
@@ -34,9 +56,12 @@ pub fn spawn_player_system(
 ) {
     let events =
         join_events.iter().map(|e| e.player_id)
-        .chain(respawn_events.iter().map(|e| e.player_id));
+            .chain(respawn_events.iter().map(|e| e.player_id))
+            .chain(init_events.iter().flat_map(|_|
+                lobby.player_data.iter().map(|(&id, _)| id).collect::<Vec<PlayerId>>()
+            )).collect::<HashSet<PlayerId>>();
 
-    events.for_each(|player_id| {
+    events.iter().for_each(|&player_id| {
         info!("Player {} Spawned", player_id);
 
         let spawn_position = spawn_points.iter().map(|spawn_trans| {
@@ -58,11 +83,7 @@ pub fn spawn_player_system(
 
         objects.objects.insert(new_object.id, player_entity);
 
-        if let Vacant(entry) = lobby.player_data.entry(player_id) {
-            entry.insert(PlayerData::new(new_object.id));
-        } else {
-            lobby.update_object_id(player_id, new_object.id).unwrap();
-        }
+        lobby.update_object_id(player_id, new_object.id).unwrap();
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id,

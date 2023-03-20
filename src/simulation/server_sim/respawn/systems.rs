@@ -33,3 +33,9 @@ pub fn dispatch_respawn_on_countdown(
 
     respawn_timer.map = respawn_timer.map.clone().into_iter().filter(|(_, time)| *time > 0.).collect();
 }
+
+pub fn clear_respawns_on_match_end(
+    mut respawn_timer: ResMut<RespawnTimer>
+) {
+    respawn_timer.map.clear();
+}

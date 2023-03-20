@@ -26,6 +26,7 @@ impl Plugin for ClientNetworkingPlugin {
             .add_event::<RecvPlayerConnectEvent>()
             .add_event::<RecvPlayerLeaveEvent>()
             .add_event::<RecvPlayerSpawnEvent>()
+            .add_event::<RecvMatchTimeEvent>()
             .add_event::<RecvObjectDespawnEvent>()
             .add_event::<RecvHealthUpdateEvent>()
             .add_event::<RecvPhysObjUpdateEvent>()
@@ -57,6 +58,10 @@ pub struct RecvPlayerSpawnEvent {
     pub player_id: PlayerId,
     pub object_id: ObjectId,
     pub position: Vec2,
+}
+
+pub struct RecvMatchTimeEvent {
+    pub time_remaining: f32,
 }
 
 pub struct RecvObjectDespawnEvent {

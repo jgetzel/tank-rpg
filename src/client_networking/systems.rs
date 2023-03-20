@@ -1,7 +1,7 @@
 use bevy::prelude::{EventWriter, Res, ResMut};
 use bevy_quinnet::client::Client;
 use bevy_quinnet::shared::channel::ChannelId;
-use crate::client_networking::{ClientMessage, RecvHealthUpdateEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
+use crate::client_networking::{ClientMessage, RecvHealthUpdateEvent, RecvMatchTimeEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
 use crate::client_networking::client_input::ClientInput;
 use crate::utils::networking::messages::*;
 
@@ -35,6 +35,7 @@ pub fn client_recv(
         EventWriter<RecvHealthUpdateEvent>,
         EventWriter<RecvPlayerDataUpdateEvent>
     ),
+    mut match_time_event: EventWriter<RecvMatchTimeEvent>,
     mut turr_update_event: EventWriter<RecvTurretUpdateEvent>,
 ) {
     while let Ok(Some(message)) = client.connection_mut().receive_message::<ServerMessage>() {
@@ -50,6 +51,9 @@ pub fn client_recv(
             }
             ServerMessage::PlayerSpawn { player_id, object_id, position } => {
                 spawn_event.send(RecvPlayerSpawnEvent { player_id, object_id, position });
+            }
+            ServerMessage::MatchTimerMsg {time_remaining} => {
+                match_time_event.send(RecvMatchTimeEvent { time_remaining });
             }
             ServerMessage::ObjectDespawn { object_id } => {
                 despawn_event.send(RecvObjectDespawnEvent { object_id });

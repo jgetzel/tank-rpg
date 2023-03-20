@@ -13,6 +13,7 @@ use crate::simulation::events::{OnObjectDespawnEvent, OnPlayerConnectEvent, OnPl
 use crate::utils::networking::messages::{PhysicsObjData, ServerMessage};
 use crate::simulation::{Lobby, ObjectId};
 use crate::simulation::Object;
+use crate::simulation::server_sim::match_ffa::{MatchTimer};
 use crate::simulation::server_sim::player::{OnHealthChangedEvent, OnKillEvent, Player, PlayerInput, PlayerTurret};
 use crate::simulation::SyncedObjects;
 use crate::utils::commands::despawn::CustomDespawnExt;
@@ -227,4 +228,14 @@ pub fn on_player_spawn(
             },
         ).unwrap();
     });
+}
+
+pub fn update_match_timer(
+    match_timer: ResMut<MatchTimer>,
+    server: Res<Server>,
+) {
+    server.endpoint().broadcast_message_on(
+        ChannelId::UnorderedReliable,
+        ServerMessage::MatchTimerMsg { time_remaining: match_timer.time_remaining }
+    ).unwrap();
 }

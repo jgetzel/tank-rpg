@@ -21,6 +21,7 @@ impl Plugin for ClientSimulationPlugin {
                     on_player_spawn,
                     on_player_update,
                     on_health_update,
+                    on_timer_update,
                 ).in_set(ClientUpdate).before(on_object_despawn)
             )
             .add_system(on_object_despawn.in_set(ClientUpdate));

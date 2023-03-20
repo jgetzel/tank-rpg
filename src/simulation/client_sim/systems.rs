@@ -6,8 +6,9 @@ use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use crate::asset_loader::resources::SpriteAssets;
-use crate::client_networking::{ClientId, RecvHealthUpdateEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
+use crate::client_networking::{ClientId, RecvHealthUpdateEvent, RecvMatchTimeEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
 use crate::simulation::events::OnPlayerSpawnEvent;
+use crate::simulation::server_sim::match_ffa::MatchTimer;
 use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
 use crate::utils::commands::despawn::CustomDespawnExt;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
@@ -174,6 +175,26 @@ pub fn on_health_update(
         let Ok(mut health) = health_q.get_mut(entity) else { return; };
         health.max_health = e.max_health;
         health.health = e.health;
+    });
+}
+
+pub fn on_timer_update(
+    mut events: EventReader<RecvMatchTimeEvent>,
+    mut match_timer: Option<ResMut<MatchTimer>>,
+    mut commands: Commands,
+) {
+    events.iter().for_each(|e| {
+        match &mut match_timer {
+            Some(match_timer) => {
+                match_timer.time_remaining = e.time_remaining;
+            }
+            None => {
+                commands.insert_resource(MatchTimer {
+                    time_remaining: e.time_remaining,
+                    match_length:  e.time_remaining,
+                });
+            }
+        }
     });
 }
 

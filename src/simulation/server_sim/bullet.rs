@@ -5,6 +5,7 @@ use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::Lobby;
 use crate::simulation::server_sim::player::components::PlayerInput;
 use crate::display::sprite_updater::BULLET_LAYER;
+use crate::ServerSet::ServerUpdate;
 use crate::simulation::Object;
 use crate::simulation::server_sim::player::components::{Player, PlayerTurret};
 use crate::simulation::server_sim::player::{OnPlayerDeathEvent, Health, OnKillEvent, OnHealthChangedEvent};
@@ -22,11 +23,14 @@ impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<BulletCollisionEvent>()
             .configure_set(CollisionSend.before(CollisionHandle))
-            .add_system(fire_bullet.before(CollisionSend))
-            .add_system(bullet_decay.after(fire_bullet))
-            .add_system(bullet_collision_sender.in_set(CollisionSend))
-            .add_system(bullet_collision_handler.in_set(CollisionHandle)
-                .after(CollisionSend));
+            .add_systems(
+                (
+                    fire_bullet.before(CollisionSend),
+                    bullet_decay.after(fire_bullet),
+                    bullet_collision_sender.in_set(CollisionSend),
+                    bullet_collision_handler.in_set(CollisionHandle)
+                ).in_set(ServerUpdate)
+            );
     }
 }
 
@@ -40,13 +44,13 @@ pub struct Bullet {
 #[derive(Debug)]
 pub struct BulletCollisionEvent {
     pub bullet: Entity,
-    pub player: Entity
+    pub player: Entity,
 }
 
 #[derive(SystemSet, Debug, Eq, PartialEq, Hash, Clone)]
 pub enum BulletSystemStage {
     CollisionSend,
-    CollisionHandle
+    CollisionHandle,
 }
 
 
@@ -67,7 +71,7 @@ fn fire_bullet(
                 Bullet {
                     owner: Some(ent),
                     lifetime: BULLET_LIFETIME,
-                     damage: BULLET_DAMAGE,
+                    damage: BULLET_DAMAGE,
                 },
                 SpriteEnum::Bullet,
                 TransformBundle::from_transform(Transform {
@@ -89,7 +93,7 @@ fn fire_bullet(
 fn bullet_decay(
     mut bullets: Query<(Entity, &mut Bullet)>,
     time: Res<Time>,
-    mut commands: Commands
+    mut commands: Commands,
 ) {
     bullets.iter_mut().for_each(|(ent, mut bullet)| {
         bullet.lifetime -= time.delta_seconds();
@@ -103,7 +107,7 @@ fn bullet_collision_sender(
     mut collision_events: EventReader<CollisionEvent>,
     mut bullet_event_wr: EventWriter<BulletCollisionEvent>,
     bullets: Query<(Entity, &Bullet)>,
-    players: Query<Entity, With<Player>>
+    players: Query<Entity, With<Player>>,
 ) {
     collision_events.iter().for_each(|&e| {
         if let CollisionEvent::Started(ent1, ent2, _) = e {
@@ -114,7 +118,7 @@ fn bullet_collision_sender(
 
             if let Some((bullet_ent, bullet)) = bullet {
                 let player_opt = pair.into_iter().find(|&e| {
-                   players.get(e).is_ok()
+                    players.get(e).is_ok()
                 });
 
                 if let Some(player) = player_opt {
@@ -136,7 +140,7 @@ fn bullet_collision_handler(
     mut healths: Query<(Entity, &mut Health)>,
     players: Query<&Player>,
     lobby: Res<Lobby>,
-    mut commands: Commands
+    mut commands: Commands,
 ) {
     events.iter().for_each(|e| {
         let Ok((entity, mut health)) = healths.get_mut(e.player) else { return; };
@@ -147,17 +151,17 @@ fn bullet_collision_handler(
         }
 
         if let Some(attacker) = bullet.owner &&
-            let Ok(&Player { id: victim_id, ..}) = players.get(entity) {
+            let Ok(&Player { id: victim_id, .. }) = players.get(entity) {
             health_writer.send(OnHealthChangedEvent {
                 object_id: lobby.player_data.get(&victim_id).unwrap().object_id.unwrap(),
                 health: health.health,
-                max_health: health.max_health
+                max_health: health.max_health,
             });
 
             if health.health <= 0. {
                 death_writer.send(OnPlayerDeathEvent { player_id: victim_id });
 
-                if let Ok(&Player { id: attacker_id, ..}) = players.get(attacker) {
+                if let Ok(&Player { id: attacker_id, .. }) = players.get(attacker) {
                     kill_writer.send(OnKillEvent {
                         attacker_id,
                         victim_id,

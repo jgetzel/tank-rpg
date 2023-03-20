@@ -1,7 +1,8 @@
 use bevy::app::App;
-use bevy::prelude::{EventWriter, IntoSystemConfig, Plugin, Res, ResMut, Resource};
+use bevy::prelude::{EventReader, EventWriter, IntoSystemConfig, NextState, not, Plugin, Res, ResMut, Resource};
 use bevy::time::Time;
 use crate::ServerSet::ServerUpdate;
+use crate::simulation::server_sim::InGameState;
 
 pub struct MatchFFAPlugin;
 
@@ -12,7 +13,8 @@ impl Plugin for MatchFFAPlugin {
         app
             .add_event::<OnMatchTimerFinishedEvent>()
             .insert_resource(MatchTimer::new(MATCH_LENGTH_SECS))
-            .add_system(match_timer_clock.in_set(ServerUpdate));
+            .add_system(match_timer_clock.in_set(ServerUpdate).run_if(not(is_match_finished)))
+            .add_system(pause_on_match_finish);
     }
 }
 
@@ -49,6 +51,11 @@ fn match_timer_clock(
     }
 }
 
-fn pause_on_match_finish() {
-
+fn pause_on_match_finish(
+    mut events: EventReader<OnMatchTimerFinishedEvent>,
+    mut next_state: ResMut<NextState<InGameState>>
+) {
+    events.iter().for_each(|_| {
+        next_state.set(InGameState::Paused);
+    });
 }

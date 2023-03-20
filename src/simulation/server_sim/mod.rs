@@ -1,5 +1,6 @@
 use bevy::app::App;
-use bevy::prelude::{Commands, Plugin, Window, World};
+use bevy::prelude::{Commands, IntoSystemSetConfig, OnUpdate, Plugin, States, Window, World};
+use crate::ServerSet::ServerUpdate;
 use crate::simulation::server_sim::bullet::BulletPlugin;
 use crate::simulation::server_sim::init::InitPlugin;
 use crate::simulation::server_sim::match_ffa::MatchFFAPlugin;
@@ -22,6 +23,10 @@ pub struct ServerSimulationPlugin;
 impl Plugin for ServerSimulationPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_state::<InGameState>()
+            .configure_set(ServerUpdate.in_set(OnUpdate(InGameState::Playing)));
+
+        app
             .add_plugin(InitPlugin)
             .add_plugin(MatchFFAPlugin)
             .add_plugin(PlayerPlugin)
@@ -30,6 +35,13 @@ impl Plugin for ServerSimulationPlugin {
             .add_plugin(RespawnPlugin)
             .add_plugin(SpawnPlugin);
     }
+}
+
+#[derive(States, Debug, Copy, Clone, Eq, PartialEq, Hash, Default)]
+pub enum InGameState {
+    #[default]
+    Playing,
+    Paused,
 }
 
 pub fn despawn_all_entities(

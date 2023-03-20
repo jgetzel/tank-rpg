@@ -1,6 +1,7 @@
 use bevy::app::App;
 use bevy::prelude::*;
 use std::collections::HashMap;
+use crate::AppState;
 use crate::ServerSet::ServerUpdate;
 use crate::simulation::events::OnRespawnTimerFinish;
 use crate::simulation::server_sim::bullet::BulletSystemStage::CollisionHandle;
@@ -21,7 +22,9 @@ impl Plugin for RespawnPlugin {
                     systems::run_respawn_timer,
                     systems::dispatch_respawn_on_countdown,
                 ).chain().in_set(ServerUpdate)
-            );
+            )
+            .add_system(systems::clear_respawns_on_match_end
+                .in_schedule(OnExit(AppState::InGame)));
 
     }
 }

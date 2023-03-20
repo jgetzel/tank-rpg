@@ -5,7 +5,7 @@ use crate::ServerSet::ServerUpdate;
 
 pub struct MatchFFAPlugin;
 
-const MATCH_LENGTH_SECS: f32 = 600.;
+const MATCH_LENGTH_SECS: f32 = 10.;
 
 impl Plugin for MatchFFAPlugin {
     fn build(&self, app: &mut App) {
@@ -33,6 +33,11 @@ impl MatchTimer {
 
 pub struct OnMatchTimerFinishedEvent;
 
+pub fn is_match_finished(match_timer: Option<Res<MatchTimer>>) -> bool {
+    let Some(match_timer) = match_timer else { return false; };
+    match_timer.time_remaining <= 0.
+}
+
 fn match_timer_clock(
     mut match_timer: ResMut<MatchTimer>,
     time: Res<Time>,
@@ -42,4 +47,8 @@ fn match_timer_clock(
     if match_timer.time_remaining <= 0. {
         finished_writer.send(OnMatchTimerFinishedEvent);
     }
+}
+
+fn pause_on_match_finish() {
+
 }

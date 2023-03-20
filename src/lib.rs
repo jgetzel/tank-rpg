@@ -101,6 +101,7 @@ pub enum AppState {
     Loading,
     MainMenu,
     InGame,
+    Paused,
 }
 
 #[allow(clippy::enum_variant_names)]

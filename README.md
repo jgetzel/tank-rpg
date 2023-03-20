@@ -16,9 +16,18 @@ Very basic combat is implemented. You can shoot bullets at other connected playe
 that's about it (so far). Player's have their health displayed, there is a leaderboard noting kill
 counts for each player, and players respawn at the least crowded spawn location after 5 seconds.
 
-Next steps are to include a match timer, so matches can be finished with a final leaderboard,
-and implementing a simple map with collision and obstacles.
+Matches currently last for 5 minutes, and after 10 seconds matches restart. Players can join and disconnect at any time.
 
-Further in the future, the player will be able to equip skills dropped from other players, and
-level up based on kills. More complex movement and mechanics will be added such as dashing and 
-bullet bouncing.
+Next immediate steps are:
+- More user friendly UI for hosting and joining servers.
+- Implement map with obstacles/collision
+
+Further in the future, this project will have:
+- More complex movement options in the form of skills
+    - Boosting
+    - dodging
+- Leveling up
+- Equip skills dropped from other players/from leveling up
+    - Shield
+    - Bouncing bullets
+    - Stat increases

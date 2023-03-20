@@ -1,6 +1,5 @@
 use bevy::app::{App, Plugin};
 use bevy::prelude::*;
-use bevy::utils::petgraph::visit::Walker;
 use bevy_egui::{egui, EguiContexts};
 use crate::AppState;
 use crate::simulation::SyncedObjects;

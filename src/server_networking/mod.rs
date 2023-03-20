@@ -23,6 +23,7 @@ impl Plugin for ServerNetworkingPlugin {
                     on_client_connect,
                     on_client_disconnect,
                     on_player_spawn,
+                    update_match_timer,
                     update_health,
                     update_kill_death_count,
                 ).in_set(ServerSend).before(on_object_despawn))

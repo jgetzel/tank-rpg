@@ -14,6 +14,7 @@ pub enum ServerMessage {
     PlayerDisconnected { player_id: PlayerId },
     ObjectDespawn { object_id: ObjectId },
     PlayerSpawn { player_id: PlayerId, object_id: ObjectId, position: Vec2 },
+    MatchTimerMsg { time_remaining: f32 },
     PhysObjUpdate { objects: HashMap<ObjectId, PhysicsObjData> },
     PlayerDataUpdate { player_id: PlayerId, data: PlayerData }, //TODO find a better way to update K/D count
     HealthUpdate { object_id: ObjectId, health: f32, max_health: f32 },

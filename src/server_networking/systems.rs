@@ -13,6 +13,7 @@ use crate::simulation::events::{OnObjectDespawnEvent, OnPlayerConnectEvent, OnPl
 use crate::utils::networking::messages::{PhysicsObjData, ServerMessage};
 use crate::simulation::{Lobby, ObjectId};
 use crate::simulation::Object;
+use crate::simulation::server_sim::init::OnInitEvent;
 use crate::simulation::server_sim::match_ffa::{MatchTimer};
 use crate::simulation::server_sim::player::{OnHealthChangedEvent, OnKillEvent, Player, PlayerInput, PlayerTurret};
 use crate::simulation::SyncedObjects;
@@ -92,6 +93,7 @@ pub fn server_send_turrets(
 
 pub fn update_kill_death_count(
     mut kill_events: EventReader<OnKillEvent>,
+    mut init_events: EventReader<OnInitEvent>,
     mut lobby: ResMut<Lobby>,
     server: Res<Server>,
 ) {
@@ -110,6 +112,15 @@ pub fn update_kill_death_count(
                 ServerMessage::PlayerDataUpdate { player_id: e.victim_id, data: victim_data.clone() },
             ).unwrap();
         }
+    });
+
+    init_events.iter().for_each(|_| {
+        lobby.player_data.iter().for_each(|(&player_id, data)| {
+            server.endpoint().broadcast_message_on(
+                ChannelId::UnorderedReliable,
+                ServerMessage::PlayerDataUpdate {player_id, data: data.clone() }
+            ).unwrap();
+        })
     });
 }
 

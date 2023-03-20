@@ -8,7 +8,7 @@ use crate::AppState;
 
 pub struct MatchFFAPlugin;
 
-const MATCH_LENGTH_SECS: f32 = 300.;
+const MATCH_LENGTH_SECS: f32 = 500.;
 const RESTART_WAIT_SECS: f32 = 10.;
 
 impl Plugin for MatchFFAPlugin {
@@ -20,10 +20,15 @@ impl Plugin for MatchFFAPlugin {
             .add_system(match_timer_clock.in_set(ServerUpdate)
                 .run_if(not(is_match_finished))
                 .in_set(OnUpdate(AppState::InGame)))
-            .add_system(pause_on_match_finish)
-            .add_system(start_restart_timer_on_match_finish)
-            .add_system(restart_timer_clock.run_if(is_restart_timer_ticking))
-            .add_system(new_match_on_restart_timer);
+            .add_systems(
+                (
+                    pause_on_match_finish,
+                    start_restart_timer_on_match_finish,
+                    restart_timer_clock.run_if(is_restart_timer_ticking),
+                    new_match_on_restart_timer,
+                )
+            )
+            .add_system(clear_player_scores_on_exit.in_schedule(OnExit(AppState::InGame)));
     }
 }
 

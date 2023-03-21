@@ -46,14 +46,15 @@ const UNRELIABLE_BYTE_MAX: usize = 3000;
 
 pub fn server_send_phys_obj(
     server: Res<Server>,
-    query: Query<(&Object, &Transform, &Velocity, &SpriteEnum)>,
+    query: Query<(&Object, &Transform, Option<&Velocity>, Option<&SpriteEnum>)>,
 ) {
     let objects: Vec<(ObjectId, PhysicsObjData)> = query.iter()
-        .map(|(object, trans, vel, &sprite)| {
+        .map(|(object, trans, vel, sprite)| {
             (object.id, PhysicsObjData {
                 translation: trans.translation,
-                velocity: vel.linvel,
-                sprite,
+                rotation: trans.rotation,
+                velocity: vel.unwrap_or(&Velocity::zero()).linvel,
+                sprite: sprite.copied(),
             })
         }).collect();
 

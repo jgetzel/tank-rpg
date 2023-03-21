@@ -24,8 +24,9 @@ pub enum ServerMessage {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PhysicsObjData {
     pub translation: Vec3,
+    pub rotation: Quat,
     pub velocity: Vec2,
-    pub sprite: SpriteEnum,
+    pub sprite: Option<SpriteEnum>,
 }
 
 pub type TurretRotationData = Quat;

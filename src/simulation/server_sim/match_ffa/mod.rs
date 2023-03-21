@@ -8,7 +8,7 @@ use crate::AppState;
 
 pub struct MatchFFAPlugin;
 
-const MATCH_LENGTH_SECS: f32 = 500.;
+const MATCH_LENGTH_SECS: f32 = 300.;
 const RESTART_WAIT_SECS: f32 = 10.;
 
 impl Plugin for MatchFFAPlugin {

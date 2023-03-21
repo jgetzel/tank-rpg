@@ -7,6 +7,7 @@ use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use crate::asset_loader::resources::SpriteAssets;
 use crate::client_networking::{ClientId, RecvHealthUpdateEvent, RecvMatchTimeEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
+use crate::simulation::client_sim::PlayerSpawnBuffer;
 use crate::simulation::events::OnPlayerSpawnEvent;
 use crate::simulation::server_sim::match_ffa::MatchTimer;
 use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
@@ -25,31 +26,34 @@ pub fn phys_obj_updater(
     mut commands: Commands,
 ) {
     update_event.iter().for_each(|ev| match objects.objects.get(&ev.id) {
-            Some(&entity) => {
-                if let Ok((mut trans, vel, sprite)) = query.get_mut(entity) {
-                    trans.translation = ev.data.translation;
-                    if let Some(mut vel) = vel {
-                        vel.linvel = ev.data.velocity;
-                    }
-                    match sprite {
-                        Some(mut sprite) => *sprite = ev.data.sprite,
-                        None => {
-                            commands.entity(entity).insert(ev.data.sprite);
+        Some(&entity) => {
+            if let Ok((mut trans, vel, sprite)) = query.get_mut(entity) {
+                trans.translation = ev.data.translation;
+                trans.rotation = ev.data.rotation;
+                if let Some(mut vel) = vel {
+                    vel.linvel = ev.data.velocity;
+                }
+                match sprite {
+                    Some(mut sprite) => *sprite = ev.data.sprite.unwrap(),
+                    None => {
+                        if let Some(sprite) = ev.data.sprite {
+                            commands.entity(entity).insert(sprite);
                         }
                     }
                 }
             }
-            None => {
-                objects.objects.insert(ev.id, init_object(ev, &mut commands, &assets));
-            }
-        });
+        }
+        None => {
+            objects.objects.insert(ev.id, init_object(ev, &mut commands, &assets));
+        }
+    });
 }
 
 pub fn turr_updater(
     mut update_event: EventReader<RecvTurretUpdateEvent>,
     objects: ResMut<SyncedObjects>,
     parent_q: Query<&Children, With<Player>>,
-    mut turr_q: Query<&mut Transform, With<PlayerTurret>>
+    mut turr_q: Query<&mut Transform, With<PlayerTurret>>,
 ) {
     update_event.iter().for_each(|ev| {
         if let Some(&ent) = objects.objects.get(&ev.parent_id) {
@@ -68,9 +72,10 @@ fn init_object(event: &RecvPhysObjUpdateEvent, commands: &mut Commands, assets: 
     commands
         .spawn((
             SpriteBundle {
-                texture: assets.get(event.data.sprite),
+                texture: assets.get(event.data.sprite.unwrap()),
                 transform: Transform {
                     translation: event.data.translation,
+                    rotation: event.data.rotation,
                     ..default()
                 },
                 ..default()
@@ -121,22 +126,20 @@ pub fn on_player_leave(
 
 pub fn on_player_spawn(
     mut spawn_event: EventReader<RecvPlayerSpawnEvent>,
+    mut spawn_buffer: ResMut<PlayerSpawnBuffer>,
     mut spawn_writer: EventWriter<OnPlayerSpawnEvent>,
     mut commands: Commands,
     mut lobby: ResMut<Lobby>,
-    mut objects: ResMut<SyncedObjects>,
+    objects: Res<SyncedObjects>,
 ) {
-    spawn_event.iter().for_each(|e| {
-        let entity = match objects.objects.get(&e.object_id) {
-            Some(&entity) => entity,
-            None => {
-                let ent = commands.spawn_empty().id();
-                objects.objects.insert(e.object_id, ent);
-                ent
-            }
-        };
+    spawn_event.iter().for_each(|e| spawn_buffer.events.push((false, e.clone())));
 
-        commands.entity(entity).insert(get_player_bundle(e.player_id, Some(e.position)))
+    spawn_buffer.events.iter_mut().for_each(|(cleanup, e)| {
+        let Some(entity) = objects.objects.get(&e.object_id) else { return; };
+
+        *cleanup = true;
+
+        commands.entity(*entity).insert(get_player_bundle(e.player_id, Some(e.position)))
             .insert(Object { id: e.object_id })
             .with_children(|p| {
                 p.spawn(get_turret_bundle());
@@ -154,6 +157,8 @@ pub fn on_player_spawn(
             position: e.position,
         });
     });
+
+    spawn_buffer.events.drain_filter(|(cleanup, _)| *cleanup);
 }
 
 pub fn on_player_update(
@@ -191,7 +196,7 @@ pub fn on_timer_update(
             None => {
                 commands.insert_resource(MatchTimer {
                     time_remaining: e.time_remaining,
-                    match_length:  e.time_remaining,
+                    match_length: e.time_remaining,
                 });
             }
         }

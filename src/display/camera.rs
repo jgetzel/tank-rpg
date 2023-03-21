@@ -4,7 +4,7 @@ use bevy::prelude::{Camera, Commands, Component, debug, EventReader, IntoSystemC
 use bevy::time::Time;
 use serde::{Deserialize, Serialize};
 use crate::client_networking::ClientId;
-use crate::ClientSet::ClientReceive;
+use crate::ClientSet::ClientUpdate;
 use crate::display::sprite_updater::CAMERA_LAYER;
 use crate::utils::networking::{is_client_exe};
 use crate::simulation::server_sim::player::components::You;
@@ -22,7 +22,7 @@ impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<MainCamera>()
             .add_system(camera_move)
-            .add_system(you_tag_adder.run_if(is_client_exe).after(ClientReceive));
+            .add_system(you_tag_adder.run_if(is_client_exe).after(ClientUpdate));
     }
 }
 

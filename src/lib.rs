@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(drain_filter)]
 
 use bevy::prelude::*;
 use std::default::Default;

@@ -54,6 +54,7 @@ pub struct RecvPlayerLeaveEvent {
     pub player_id: PlayerId,
 }
 
+#[derive(Clone)]
 pub struct RecvPlayerSpawnEvent {
     pub player_id: PlayerId,
     pub object_id: ObjectId,

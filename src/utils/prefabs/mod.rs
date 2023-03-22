@@ -10,8 +10,8 @@ use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
 use crate::display::sprite_updater::{BACKGROUND_LAYER, CAMERA_LAYER, PLAYER_LAYER, TURRET_LAYER};
 use crate::simulation::server_sim::spawn::SpawnPoint;
 
-const _TURRET_ANCHOR: [f32; 2] = [-0.18, 0.];
-const TURRET_POSITION: [f32; 2] = [0., 20.];
+const _TURRET_ANCHOR: [f32; 2] = [-0.045, 0.15];
+const TURRET_POSITION: [f32; 2] = [-7., 27.];
 const TANK_COLLIDER_RADIUS: f32 = 45.;
 
 pub fn default_camera() -> impl Bundle {
@@ -48,7 +48,7 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
         Name::from(format!("Player {id}")),
         Player::new(id),
         Health::default(),
-        SpriteEnum::TankGray,
+        SpriteEnum::TankDefault,
         SpatialBundle {
             transform: Transform {
                 translation: position.extend(PLAYER_LAYER),
@@ -71,7 +71,7 @@ pub fn get_turret_bundle() -> impl Bundle {
     (
         Name::from("Turret"),
         PlayerTurret::default(),
-        SpriteEnum::TankGrayTurret,
+        SpriteEnum::TankDefaultTurret,
         Sprite {
             anchor: Anchor::Custom(Vec2::from(_TURRET_ANCHOR)),
             ..default()

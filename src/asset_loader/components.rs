@@ -11,16 +11,20 @@ use crate::asset_loader::components::FontEnum::Anta;
 #[reflect(Component)]
 pub enum SpriteEnum {
     #[default]
-    TankGray,
-    TankGrayTurret,
+    TankDefault,
+    TankDefaultTurret,
+    TankClassic,
+    TankClassicTurret,
     Bullet,
     Background,
 }
 
 pub static SPRITE_PATH_MAP: Lazy<HashMap<SpriteEnum, &str>> = Lazy::new(||
     HashMap::from([
-        (TankGray, "tank_gray.png"),
-        (TankGrayTurret, "tank_gray_turret.png"),
+        (TankDefault, "tank_default.png"),
+        (TankDefaultTurret, "tank_default_turret.png"),
+        (TankClassic, "tank_classic.png"),
+        (TankClassicTurret, "tank_classic_turret.png"),
         (Bullet, "bullet.png"),
         (Background, "background.png")
     ])

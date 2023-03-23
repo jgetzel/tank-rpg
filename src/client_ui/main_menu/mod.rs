@@ -15,6 +15,7 @@ impl Plugin for MainMenuPlugin {
         app
             .insert_resource(ServerIPInput("".into()))
             .insert_resource(ServerPortInput("".into()))
+            .insert_resource(CenterMenuState::Main)
             .add_state::<ConnectState>()
             .add_event::<OnConnectAttempt>()
             .add_event::<OnHostAttempt>()
@@ -38,6 +39,14 @@ pub struct ServerIPInput(pub String);
 
 #[derive(Resource)]
 pub struct ServerPortInput(pub String);
+
+#[derive(Resource, Default)]
+pub enum CenterMenuState {
+    #[default]
+    Main,
+    Join,
+    Host,
+}
 
 pub struct OnConnectAttempt {
     pub address: SocketAddr

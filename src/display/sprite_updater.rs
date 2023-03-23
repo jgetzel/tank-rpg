@@ -1,6 +1,6 @@
 use bevy::app::App;
 use bevy::asset::Handle;
-use bevy::prelude::{Color, Commands, Component, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform, With};
+use bevy::prelude::{Commands, Component, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform, With};
 use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::resources::SpriteAssets;
 

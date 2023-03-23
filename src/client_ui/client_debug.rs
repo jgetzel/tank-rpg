@@ -28,11 +28,11 @@ impl Plugin for ClientDebugUIPlugin {
             );
 
 
-        app.add_plugin(RapierDebugRenderPlugin::default());
-            // .insert_resource(DebugRenderContext {
-            //     enabled: true, ..default()
-            // })
-            // .add_system(toggle_debug_render);
+        app.add_plugin(RapierDebugRenderPlugin::default())
+            .insert_resource(DebugRenderContext {
+                enabled: true, ..default()
+            })
+            .add_system(toggle_debug_render);
     }
 }
 

@@ -16,6 +16,7 @@ static BULLET_COLLIDER_RADIUS: f32 = 10.;
 static BULLET_OFFSET: f32 = 95.;
 static BULLET_LIFETIME: f32 = 3.0;
 static BULLET_DAMAGE: f32 = 5.0;
+static BULLET_SCALE: f32 = 0.5;
 
 pub struct BulletPlugin;
 
@@ -78,6 +79,7 @@ fn fire_bullet(
                 TransformBundle::from_transform(Transform {
                     translation: start_pos.extend(BULLET_LAYER),
                     rotation: Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle),
+                    scale: Vec3::new(1., 1., 1.) * BULLET_SCALE,
                     ..default()
                 }),
                 Object::new(),

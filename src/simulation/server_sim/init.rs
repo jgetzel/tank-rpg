@@ -1,11 +1,9 @@
 use bevy::app::App;
 use bevy::prelude::*;
-use bevy::reflect::{List};
 use crate::AppState;
-use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::server_sim::despawn_all_entities;
 use crate::utils::{filter_points_by_min_distance, generate_evenly_spaced_points_on_polygon_edges, generate_random_points_in_polygon};
-use crate::utils::prefabs::{default_background, default_camera, spawn_point, tree_leaves, tree_trunk};
+use crate::utils::prefabs::{default_camera, spawn_point, tree_trunk};
 
 pub struct InitPlugin;
 

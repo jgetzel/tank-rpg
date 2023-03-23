@@ -3,10 +3,8 @@ use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{Align2, RichText};
 use crate::AppState;
-use crate::client_ui::match_length::ui::{DEFAULT_FRAME, WIDTH};
 use crate::simulation::server_sim::match_ffa::MatchTimer;
-
-mod ui;
+use crate::utils::ui::DEFAULT_FRAME;
 
 pub struct MatchLengthUIPlugin;
 
@@ -16,6 +14,8 @@ impl Plugin for MatchLengthUIPlugin {
             .add_system(match_length_ui.in_set(OnUpdate(AppState::InGame)));
     }
 }
+
+pub const WIDTH: f32 = 100.;
 
 fn match_length_ui(
     mut contexts: EguiContexts,

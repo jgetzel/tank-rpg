@@ -1,6 +1,6 @@
 use bevy::app::App;
 use bevy::asset::Handle;
-use bevy::prelude::{Commands, Component, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform, With};
+use bevy::prelude::{Color, Commands, Component, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform, With};
 use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::resources::SpriteAssets;
 
@@ -15,7 +15,7 @@ impl Plugin for SpriteUpdatePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems((
             update_sprite_handle,
-            auto_sort_system
+            auto_sort_system,
         ));
     }
 }
@@ -72,3 +72,4 @@ fn auto_sort_system(
         trans.translation.z = -trans.translation.y / 10000.;
     });
 }
+

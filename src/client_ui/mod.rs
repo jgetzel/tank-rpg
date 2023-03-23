@@ -8,6 +8,7 @@ use crate::client_ui::leaderboard::LeaderboardUIPlugin;
 use crate::client_ui::main_menu::MainMenuPlugin;
 use crate::client_ui::match_end_screen::MatchEndScreenUIPlugin;
 use crate::client_ui::match_length::MatchLengthUIPlugin;
+use crate::client_ui::minimap::MiniMapUIPlugin;
 
 mod client_debug;
 mod health;
@@ -15,6 +16,7 @@ mod leaderboard;
 mod main_menu;
 mod match_length;
 mod match_end_screen;
+mod minimap;
 
 pub struct ClientUIPlugin;
 
@@ -25,7 +27,8 @@ impl Plugin for ClientUIPlugin {
             .add_plugin(HealthUiPlugin)
             .add_plugin(LeaderboardUIPlugin)
             .add_plugin(MatchLengthUIPlugin)
-            .add_plugin(MatchEndScreenUIPlugin);
+            .add_plugin(MatchEndScreenUIPlugin)
+            .add_plugin(MiniMapUIPlugin);
 
         app.add_system(main_menu_on_load.in_set(OnUpdate(AppState::Loading)));
 

@@ -1,9 +1,7 @@
-use bevy::prelude::default;
-use bevy_egui::egui::*;
+use bevy::utils::default;
+use bevy_egui::egui::{Color32, Frame, Margin, Rounding, Visuals};
 use bevy_egui::egui::epaint::Shadow;
 use once_cell::sync::Lazy;
-
-pub const WIDTH: f32 = 100.;
 
 pub static DEFAULT_FRAME: Lazy<Frame> = Lazy::new(||
     Frame {

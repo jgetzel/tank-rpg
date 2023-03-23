@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use bevy::prelude::{Vec3, Vec2, Quat};
+use bevy::prelude::{Vec2, Quat, Transform};
 use bevy::utils::HashMap;
 use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::ObjectId;
@@ -23,8 +23,7 @@ pub enum ServerMessage {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PhysicsObjData {
-    pub translation: Vec3,
-    pub rotation: Quat,
+    pub transform: Transform,
     pub velocity: Vec2,
     pub sprite: Option<SpriteEnum>,
 }

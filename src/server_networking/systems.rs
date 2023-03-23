@@ -49,10 +49,9 @@ pub fn server_send_phys_obj(
     query: Query<(&Object, &Transform, Option<&Velocity>, Option<&SpriteEnum>)>,
 ) {
     let objects: Vec<(ObjectId, PhysicsObjData)> = query.iter()
-        .map(|(object, trans, vel, sprite)| {
+        .map(|(object, &trans, vel, sprite)| {
             (object.id, PhysicsObjData {
-                translation: trans.translation,
-                rotation: trans.rotation,
+                transform: trans,
                 velocity: vel.unwrap_or(&Velocity::zero()).linvel,
                 sprite: sprite.copied(),
             })

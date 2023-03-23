@@ -28,8 +28,7 @@ pub fn phys_obj_updater(
     update_event.iter().for_each(|ev| match objects.objects.get(&ev.id) {
         Some(&entity) => {
             if let Ok((mut trans, vel, sprite)) = query.get_mut(entity) {
-                trans.translation = ev.data.translation;
-                trans.rotation = ev.data.rotation;
+                *trans = ev.data.transform;
                 if let Some(mut vel) = vel {
                     vel.linvel = ev.data.velocity;
                 }
@@ -73,11 +72,7 @@ fn init_object(event: &RecvPhysObjUpdateEvent, commands: &mut Commands, assets: 
         .spawn((
             SpriteBundle {
                 texture: assets.get(event.data.sprite.unwrap()),
-                transform: Transform {
-                    translation: event.data.translation,
-                    rotation: event.data.rotation,
-                    ..default()
-                },
+                transform: event.data.transform,
                 ..default()
             },
             Velocity {

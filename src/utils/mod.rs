@@ -7,7 +7,7 @@ pub mod ui;
 use bevy::math::Vec2;
 use rand;
 use rand::distributions::{Distribution};
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rand_distr::Normal;
 
@@ -72,6 +72,32 @@ pub fn generate_random_points_in_polygon<T: Into<Vec2> + Copy>(polygon: &[T], co
     points
 }
 
+pub fn generate_evenly_spaced_points_within_polygon<T: Into<Vec2> + Copy>(polygon: &[T], spacing: f32) -> Vec<Vec2> {
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+    for &point in polygon {
+        let point = point.into();
+        min_x = min_x.min(point.x);
+        min_y = min_y.min(point.y);
+        max_x = max_x.max(point.x);
+        max_y = max_y.max(point.y);
+    }
+
+    let cols = ((max_x - min_x) / spacing).ceil() as usize;
+    let rows = ((max_y - min_y) / spacing).ceil() as usize;
+
+    let mut points = Vec::new();
+    for i in 0..=rows {
+        for j in 0..=cols {
+            let point = Vec2::new(min_x + j as f32 * spacing, min_y + i as f32 * spacing);
+            if is_point_in_polygon(&point, polygon) {
+                points.push(point);
+            }
+        }
+    }
+
+    points
+}
+
 pub fn generate_evenly_spaced_points_on_polygon_edges<T: Into<Vec2> + Copy>(polygon: &[T], spacing: f32) -> Vec<Vec2> {
     let mut points = Vec::new();
 
@@ -93,6 +119,22 @@ pub fn generate_evenly_spaced_points_on_polygon_edges<T: Into<Vec2> + Copy>(poly
     }
 
     points
+}
+
+pub fn nudge_points_randomly(points: Vec<Vec2>, nudge_amount: f32) -> Vec<Vec2> {
+    let mut new_points = Vec::new();
+
+    let mut rng = ChaCha8Rng::seed_from_u64(0);
+
+    points.iter().for_each(|&p| {
+        let x_push = rng.gen_range(-nudge_amount..=nudge_amount);
+        let y_push = rng.gen_range(-nudge_amount..=nudge_amount);
+
+        let nudge_vec = Vec2::new(x_push, y_push);
+       new_points.push(p + nudge_vec);
+    });
+
+    new_points
 }
 
 fn is_point_in_polygon<T: Into<Vec2> + Copy>(point: &Vec2, polygon: &[T]) -> bool {

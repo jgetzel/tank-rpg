@@ -1,12 +1,9 @@
 use bevy::app::App;
 use bevy::asset::{Assets, Handle};
-use bevy::log::info;
-use bevy::math::{IVec2, UVec2, Vec2};
-use bevy::prelude::{Camera, Commands, Component, default, Entity, GlobalTransform, Image, IntoSystemConfig, OnUpdate, OrthographicProjection, Plugin, Query, Res, ResMut, Resource, Sprite, SpriteBundle, Transform, TransformBundle, Window, With};
-use bevy::reflect::List;
-use bevy::utils::{HashMap, HashSet};
+use bevy::math::{IVec2, Vec2};
+use bevy::prelude::{Camera, Commands, Component, default, Entity, GlobalTransform, Image, IntoSystemConfig, OnUpdate, Plugin, Query, Res, ResMut, Resource, Sprite, SpriteBundle, Transform, TransformBundle, Window, With};
+use bevy::utils::{HashSet};
 use bevy::window::PrimaryWindow;
-use bevy_egui::egui::emath;
 use crate::AppState;
 use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::resources::SpriteAssets;

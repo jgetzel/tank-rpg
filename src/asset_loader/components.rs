@@ -15,6 +15,8 @@ pub enum SpriteEnum {
     TankDefaultTurret,
     TankClassic,
     TankClassicTurret,
+    TreeTrunk1,
+    TreeLeaves1,
     Bullet,
     Background,
 }
@@ -25,6 +27,8 @@ pub static SPRITE_PATH_MAP: Lazy<HashMap<SpriteEnum, &str>> = Lazy::new(||
         (TankDefaultTurret, "tank_default_turret.png"),
         (TankClassic, "tank_classic.png"),
         (TankClassicTurret, "tank_classic_turret.png"),
+        (TreeTrunk1, "tree_trunk_1.png"),
+        (TreeLeaves1, "tree_leaves_1.png"),
         (Bullet, "bullet.png"),
         (Background, "background.png")
     ])

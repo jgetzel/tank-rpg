@@ -21,7 +21,6 @@ use bevy_egui::EguiPlugin;
 use bevy_embedded_assets::EmbeddedAssetPlugin;
 use crate::asset_loader::AssetLoaderPlugin;
 use crate::client_networking::ClientNetworkingPlugin;
-use simulation::server_sim::player::PlayerInput;
 use crate::client_ui::ClientUIPlugin;
 use crate::ClientSet::{ClientReceive, ClientSend, ClientUpdate};
 use crate::server_networking::ServerNetworkingPlugin;
@@ -32,7 +31,7 @@ use crate::ServerSet::{ServerReceive, ServerSend, ServerUpdate};
 use crate::utils::networking::{is_client_connected, is_server_listening};
 
 mod asset_loader;
-mod utils;
+pub mod utils;
 mod client_networking;
 mod server_networking;
 mod simulation;
@@ -63,7 +62,7 @@ impl Plugin for ServerExecutablePlugin {
     }
 }
 
-struct DefaultExecutablePlugin;
+pub struct DefaultExecutablePlugin;
 
 impl Plugin for DefaultExecutablePlugin {
     fn build(&self, app: &mut App) {
@@ -89,10 +88,6 @@ impl Plugin for DefaultExecutablePlugin {
             .configure_set(ClientUpdate.before(ClientSend)
                 .run_if(is_client_connected.and_then(not(is_server_listening))))
             .configure_set(ClientSend.run_if(is_client_connected));
-
-        #[cfg(debug_assertions)]
-        app
-            .register_type::<PlayerInput>();
     }
 }
 

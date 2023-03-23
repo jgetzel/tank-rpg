@@ -1,22 +1,27 @@
 use bevy::app::App;
 use bevy::asset::Handle;
-use bevy::prelude::{Commands, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform};
+use bevy::prelude::{Commands, Component, default, Entity, Image, Plugin, Query, Res, Sprite, SpriteBundle, Transform, With};
 use crate::asset_loader::components::SpriteEnum;
 use crate::asset_loader::resources::SpriteAssets;
 
-pub const BACKGROUND_LAYER: f32 = -10.;
+pub const BACKGROUND_LAYER: f32 = -100.;
 pub const PLAYER_LAYER: f32 = 0.;
 pub const BULLET_LAYER: f32 = 1.;
-pub const TURRET_LAYER: f32 = 2.;
 pub const CAMERA_LAYER: f32 = 100.;
 
 pub struct SpriteUpdatePlugin;
 
 impl Plugin for SpriteUpdatePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(update_sprite_handle);
+        app.add_systems((
+            update_sprite_handle,
+            auto_sort_system
+        ));
     }
 }
+
+#[derive(Component)]
+pub struct AutoSorted;
 
 #[allow(clippy::type_complexity)]
 fn update_sprite_handle(
@@ -57,5 +62,13 @@ fn update_sprite_handle(
             }
             ActionType::Neither => {}
         };
+    });
+}
+
+fn auto_sort_system(
+    mut q: Query<&mut Transform, With<AutoSorted>>
+) {
+    q.iter_mut().for_each(|mut trans| {
+        trans.translation.z = -trans.translation.y / 10000.;
     });
 }

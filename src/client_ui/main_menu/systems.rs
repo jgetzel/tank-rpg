@@ -2,12 +2,12 @@ use crate::client_ui::main_menu::ui::{MainMenuExt, CENTER_WIDTH, MAIN_MENU_FRAME
 use crate::client_ui::main_menu::{
     CenterMenuState, ConnectState, OnConnectAttempt, OnHostAttempt, ServerIPInput, ServerPortInput,
 };
-use crate::server_networking::{DEFAULT_SERVER_HOSTNAME, DEFAULT_SERVER_PORT};
+use crate::server_networking::{DEFAULT_SERVER_HOSTNAME};
 use crate::utils::prefabs::default_camera;
 use crate::AppState;
 use bevy::log::info;
 use bevy::prelude::{Commands, EventReader, EventWriter, NextState, ResMut};
-use bevy_egui::egui::{Align2, Button, RichText};
+use bevy_egui::egui::{Align2, RichText};
 use bevy_egui::{egui, EguiContexts};
 use bevy_quinnet::client::certificate::CertificateVerificationMode;
 use bevy_quinnet::client::connection::{ConnectionConfiguration, ConnectionEvent};

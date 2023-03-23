@@ -10,6 +10,7 @@ use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
 use crate::display::sprite_updater::{AutoSorted, BACKGROUND_LAYER, CAMERA_LAYER, PLAYER_LAYER};
 use crate::simulation::server_sim::spawn::SpawnPoint;
 
+const TREE_ANCHOR: [f32; 2] = [0., -0.22];
 const TREE_TRUNK_ANCHOR: [f32; 2] = [0., -0.375];
 const _TURRET_ANCHOR: [f32; 2] = [-0.045, 0.15];
 const TURRET_POSITION: [f32; 2] = [-7., 27.];
@@ -33,6 +34,20 @@ pub fn default_background() -> impl Bundle {
     (
         SpriteEnum::Background,
         Transform::from_xyz(0., 0., BACKGROUND_LAYER)
+    )
+}
+
+pub fn tree() -> impl Bundle {
+    (
+        Name::new("Tree"),
+        AutoSorted,
+        SpriteEnum::Tree,
+        Sprite {
+            anchor: Anchor::Custom(Vec2::from(TREE_ANCHOR)),
+            ..default()
+        },
+        TransformBundle::default(),
+        Collider::ball(100.),
     )
 }
 

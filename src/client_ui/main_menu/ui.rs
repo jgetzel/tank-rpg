@@ -8,8 +8,6 @@ use bevy_egui::egui::*;
 use once_cell::sync::Lazy;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use bevy::log::info;
-use bevy::window::CursorIcon::Default;
 
 pub const CENTER_WIDTH: f32 = 300.;
 

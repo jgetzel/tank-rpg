@@ -2,8 +2,8 @@ use bevy::app::App;
 use bevy::prelude::*;
 use crate::AppState;
 use crate::simulation::server_sim::despawn_all_entities;
-use crate::utils::{filter_points_by_min_distance, generate_evenly_spaced_points_on_polygon_edges, generate_random_points_in_polygon};
-use crate::utils::prefabs::{default_camera, spawn_point, tree_trunk};
+use crate::utils::{generate_evenly_spaced_points_on_polygon_edges, generate_evenly_spaced_points_within_polygon, nudge_points_randomly};
+use crate::utils::prefabs::{default_camera, spawn_point, tree};
 
 pub struct InitPlugin;
 
@@ -136,8 +136,11 @@ pub fn init_default(
 
     tree_bounds.into_iter().flat_map(|(points, count)| {
         let points = points.into_iter().map(convert_point).collect::<Vec<[f32; 2]>>();
-        let points = generate_random_points_in_polygon(points.as_slice(), count);
-        filter_points_by_min_distance(points, 100.)
+        let points = generate_evenly_spaced_points_within_polygon(
+            points.as_slice(),
+            200.0
+        );
+        nudge_points_randomly(points, 10.)
     }).chain(generate_evenly_spaced_points_on_polygon_edges(
         &[
             [886., 296.],
@@ -155,11 +158,8 @@ pub fn init_default(
             [758., 327.],
         ], 10.).into_iter().map(|p| convert_point(p.to_array()).into()))
         .for_each(|p| {
-            commands.spawn(tree_trunk())
+            commands.spawn(tree())
                 .insert(Transform::from_xyz(p.x, p.y, 0.));
-            // .with_children(|p| {
-            //     p.spawn(tree_leaves());
-            // });
         });
 
     init_writer.send(OnInitEvent);

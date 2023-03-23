@@ -7,7 +7,7 @@ use crate::utils::networking::messages::PlayerId;
 #[derive(Component)]
 pub struct You;
 
-const DEFAULT_HEALTH: f32 = 20.0;
+const DEFAULT_HEALTH: f32 = 100.0;
 
 #[derive(Component)]
 pub struct Health {

@@ -2,7 +2,7 @@ use bevy::app::{App, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::*;
 use bevy::utils::default;
-use bevy_rapier2d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, Velocity};
+use bevy_rapier2d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
 use crate::AppState;
 use crate::utils::networking::{is_client_connected, is_server_listening};
 
@@ -23,12 +23,7 @@ impl Plugin for PhysicsPlugin {
                 ).in_schedule(OnEnter(AppState::InGame))
             );
 
-        app.add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.));
-
-        #[cfg(debug_assertions)]
-        app
-            // .add_plugin(RapierDebugRenderPlugin::default())
-            .register_type::<Velocity>();
+        app.add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(150.));
     }
 }
 

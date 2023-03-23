@@ -1,5 +1,6 @@
 use std::iter::zip;
 use bevy::app::{App, Plugin};
+use bevy::ecs::reflect::ReflectComponent;
 use bevy::prelude::{Camera, Commands, Component, debug, EventReader, IntoSystemConfig, Query, Reflect, Res, Transform, With, Without};
 use bevy::time::Time;
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,7 @@ use crate::simulation::SyncedObjects;
 static CAMERA_SMOOTHING: f32 = 2.;
 
 #[derive(Component, Default, Reflect, Serialize, Deserialize)]
+#[reflect(Component)]
 pub struct MainCamera;
 
 pub struct GameCameraPlugin;

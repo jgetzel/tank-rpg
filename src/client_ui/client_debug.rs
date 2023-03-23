@@ -4,6 +4,7 @@ use bevy::sprite::Anchor;
 use bevy::utils::HashMap;
 use bevy_egui::{egui, EguiContexts};
 use bevy_egui::egui::{ComboBox, DragValue, Slider};
+use bevy_rapier2d::prelude::{DebugRenderContext, RapierDebugRenderPlugin};
 use once_cell::sync::Lazy;
 use crate::AppState;
 use crate::client_ui::client_debug::ActiveWindowEnum::*;
@@ -25,6 +26,13 @@ impl Plugin for ClientDebugUIPlugin {
                 .in_set(OnUpdate(AppState::InGame))
                 .run_if(is_window_active(PlayerLobby))
             );
+
+
+        app.add_plugin(RapierDebugRenderPlugin::default());
+            // .insert_resource(DebugRenderContext {
+            //     enabled: true, ..default()
+            // })
+            // .add_system(toggle_debug_render);
     }
 }
 
@@ -45,7 +53,7 @@ pub enum ActiveWindowEnum {
     TransformEdit,
 }
 
-const ACTIVE_WINDOW_NAME_MAP: Lazy<HashMap<ActiveWindowEnum, &str>> = Lazy::new(|| {
+static ACTIVE_WINDOW_NAME_MAP: Lazy<HashMap<ActiveWindowEnum, &str>> = Lazy::new(|| {
     HashMap::from([
         (ChooseWindow, "Choose Window"),
         (PlayerLobby, "Player Lobby"),
@@ -75,6 +83,14 @@ fn debug_toggle_sys(
     if inputs.just_pressed(ScanCode(0x29)) {
         debug_toggle.debug_mode = !debug_toggle.debug_mode;
     };
+}
+
+fn toggle_debug_render(
+    debug: Res<DebugToggle>,
+    rapier_debug_config: Option<ResMut<DebugRenderContext>>
+) {
+    let Some(mut config) = rapier_debug_config else { return; };
+    config.enabled = debug.debug_mode;
 }
 
 fn choose_window(

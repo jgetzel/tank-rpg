@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::{ActiveEvents, CollisionEvent, RigidBody, Sensor, Ve
 use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::Lobby;
 use crate::simulation::server_sim::player::components::PlayerInput;
-use crate::display::sprite_updater::BULLET_LAYER;
+use crate::display::sprite_updater::{AutoSorted, BULLET_LAYER};
 use crate::ServerSet::ServerUpdate;
 use crate::simulation::Object;
 use crate::simulation::server_sim::player::components::{Player, PlayerTurret};
@@ -13,7 +13,7 @@ use crate::simulation::server_sim::bullet::BulletSystemStage::{CollisionHandle, 
 use crate::utils::commands::despawn::CustomDespawnExt;
 
 static BULLET_COLLIDER_RADIUS: f32 = 10.;
-static BULLET_OFFSET: f32 = 60.;
+static BULLET_OFFSET: f32 = 95.;
 static BULLET_LIFETIME: f32 = 3.0;
 static BULLET_DAMAGE: f32 = 5.0;
 
@@ -73,6 +73,7 @@ fn fire_bullet(
                     lifetime: BULLET_LIFETIME,
                     damage: BULLET_DAMAGE,
                 },
+                AutoSorted,
                 SpriteEnum::Bullet,
                 TransformBundle::from_transform(Transform {
                     translation: start_pos.extend(BULLET_LAYER),

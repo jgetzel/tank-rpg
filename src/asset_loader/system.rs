@@ -14,7 +14,7 @@ pub fn load_sprites(
        game_assets.insert(sprite_enum, ("sprites/".to_owned() + path).as_str());
     });
 
-    for (_, handle) in game_assets.map.iter() {
+    for (_, handle) in game_assets.iter() {
         loading.0.push(handle.clone_untyped());
     }
 }

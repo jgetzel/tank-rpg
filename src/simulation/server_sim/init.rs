@@ -2,7 +2,7 @@ use bevy::app::App;
 use bevy::prelude::*;
 use crate::AppState;
 use crate::simulation::server_sim::despawn_all_entities;
-use crate::utils::{generate_evenly_spaced_points_on_polygon_edges, generate_evenly_spaced_points_within_polygon, nudge_points_randomly};
+use crate::utils::math::polygon::{generate_evenly_spaced_points_on_polygon_edges, generate_evenly_spaced_points_within_polygon, nudge_points_randomly};
 use crate::utils::prefabs::{default_camera, spawn_point, tree};
 
 pub struct InitPlugin;

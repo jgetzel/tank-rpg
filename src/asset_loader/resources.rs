@@ -5,13 +5,17 @@ use crate::asset_loader::components::{FONT_PATH_MAP, FontEnum, SpriteEnum};
 
 #[derive(Default, Resource)]
 pub struct SpriteAssets {
-    pub map: HashMap<SpriteEnum, Handle<Image>>, //TODO remove pub? Why is it pub?
+    map: HashMap<SpriteEnum, Handle<Image>>,
     asset_server: Option<Box<AssetServer>>,
 }
 
 impl SpriteAssets {
     pub fn get(&self, sprite: SpriteEnum) -> Handle<Image> {
         self.map.get(&sprite).unwrap().clone()
+    }
+
+    pub fn iter(&self) -> std::collections::hash_map::Iter<SpriteEnum, Handle<Image>> {
+        self.map.iter()
     }
 
     pub fn insert(&mut self, sprite: SpriteEnum, path: &str) {

@@ -1,4 +1,4 @@
-use bevy::prelude::{Bundle, Camera2dBundle, default, OrthographicProjection, SpatialBundle, Sprite, Transform, TransformBundle};
+use bevy::prelude::{Bundle, Camera2dBundle, default, Entity, OrthographicProjection, SpatialBundle, Sprite, Transform, TransformBundle};
 use bevy::core::Name;
 use bevy::sprite::Anchor;
 use bevy::math::Vec2;
@@ -110,10 +110,10 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
     )
 }
 
-pub fn get_turret_bundle() -> impl Bundle {
+pub fn get_turret_bundle(owner: Entity) -> impl Bundle {
     (
         Name::from("Turret"),
-        PlayerTurret::default(),
+        PlayerTurret::new(owner),
         SpriteEnum::TankDefaultTurret,
         Sprite {
             anchor: Anchor::Custom(Vec2::from(_TURRET_ANCHOR)),

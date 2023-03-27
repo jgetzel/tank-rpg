@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::client_networking::client_input::ClientInputPlugin;
 use crate::ClientSet::*;
 use crate::client_networking::systems::*;
-use crate::utils::networking::messages::{PhysicsObjData, PlayerId};
+use crate::utils::networking::messages::{PhysicsObjData, PlayerId, ServerInitMessage, ServerReliableMessage, ServerUnreliableMessage};
 use crate::simulation::PlayerData;
 use crate::simulation::ObjectId;
 
@@ -31,13 +31,18 @@ impl Plugin for ClientNetworkingPlugin {
             .add_event::<RecvHealthUpdateEvent>()
             .add_event::<RecvPhysObjUpdateEvent>()
             .add_event::<RecvPlayerDataUpdateEvent>()
-            .add_event::<RecvTurretUpdateEvent>()
+            .add_event::<ServerUnreliableMessage>()
+            .add_event::<ServerReliableMessage>()
+            .add_event::<ServerInitMessage>()
             .add_systems(
-                (
-                    client_recv.in_set(ClientReceive),
-                    client_send.in_set(ClientSend)
-                )
-            );
+                    (
+                        client_recv_all,
+                        client_recv_unreliable.after(client_recv_all),
+                        client_recv_reliable.after(client_recv_all),
+                        client_recv_init.after(client_recv_all),
+                    ).in_set(ClientReceive),
+            )
+            .add_system(client_send.in_set(ClientSend));
     }
 }
 
@@ -57,6 +62,7 @@ pub struct RecvPlayerLeaveEvent {
 #[derive(Clone)]
 pub struct RecvPlayerSpawnEvent {
     pub player_id: PlayerId,
+    pub turret_object_ids: Vec<ObjectId>,
     pub object_id: ObjectId,
     pub position: Vec2,
 }
@@ -82,12 +88,7 @@ pub struct RecvPhysObjUpdateEvent {
 
 pub struct RecvPlayerDataUpdateEvent {
     pub id: PlayerId,
-    pub data: PlayerData
-}
-
-pub struct RecvTurretUpdateEvent {
-    pub parent_id: ObjectId,
-    pub rotation: Quat,
+    pub data: PlayerData,
 }
 
 #[derive(Resource)]

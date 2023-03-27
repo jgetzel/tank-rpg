@@ -1,15 +1,16 @@
-use std::collections::hash_map::Entry::Vacant;
 use bevy::app::App;
-use bevy::prelude::{Commands, Component, EventReader, EventWriter, GlobalTransform, IntoSystemConfig, Plugin, Query, ResMut, With};
+use bevy::prelude::*;
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
+use bevy::utils::hashbrown::hash_map::Entry::Vacant;
 use bevy::utils::HashSet;
 use crate::ServerSet::ServerUpdate;
-use crate::simulation::events::{OnPlayerConnectEvent, OnPlayerSpawnEvent, OnRespawnTimerFinish};
+use crate::simulation::events::{OnPlayerConnectEvent, OnPlayerDisconnectEvent, OnPlayerSpawnEvent, OnRespawnTimerFinish};
 use crate::simulation::server_sim::player::Player;
 use crate::simulation::{Object, PlayerData, SyncedObjects};
 use crate::simulation::Lobby;
 use crate::simulation::server_sim::init::OnInitEvent;
+use crate::utils::commands::despawn::CustomDespawnExt;
 use crate::utils::networking::messages::PlayerId;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
@@ -21,7 +22,8 @@ impl Plugin for SpawnPlugin {
             .add_systems(
                 (
                     lobby_players_on_connect.before(spawn_player_system),
-                    spawn_player_system.in_set(ServerUpdate)
+                    spawn_player_system.in_set(ServerUpdate),
+                    despawn_on_disconnect.in_set(ServerUpdate),
                 )
             );
     }
@@ -73,12 +75,14 @@ pub fn spawn_player_system(
         }).max_by(|(x, _), (y, _)| x.total_cmp(y)).unwrap().1;
 
         let new_object = Object::new();
+        let turret_object = Object::new();
 
         let player_entity = commands.spawn(
             get_player_bundle(player_id, Some(spawn_position)))
             .insert(new_object)
             .with_children(|p| {
-                p.spawn(get_turret_bundle());
+                p.spawn(get_turret_bundle(p.parent_entity()))
+                    .insert(turret_object);
             }).id();
 
         objects.objects.insert(new_object.id, player_entity);
@@ -87,8 +91,27 @@ pub fn spawn_player_system(
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id,
+            turret_object_ids: vec![turret_object.id],
             object_id: new_object.id,
             position: spawn_position,
         })
     });
 }
+
+pub fn despawn_on_disconnect(
+    mut disconnect_events: EventReader<OnPlayerDisconnectEvent>,
+    mut lobby: ResMut<Lobby>,
+    objects: ResMut<SyncedObjects>,
+    mut commands: Commands,
+) {
+    disconnect_events.iter().for_each(|OnPlayerDisconnectEvent { player_id } | {
+        info!("Player {player_id} Disconnected");
+        if let Some(PlayerData{ object_id, .. }) = lobby.player_data.remove(player_id) &&
+            let Some(object_id) = object_id &&
+            let Some(&entity) = objects.objects.get(&object_id)
+        {
+            commands.entity(entity).custom_despawn();
+        }
+    });
+}
+

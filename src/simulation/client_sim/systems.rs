@@ -1,16 +1,16 @@
 use crate::asset_loader::components::SpriteEnum;
 use crate::simulation::{Lobby, Object, PlayerData};
 use crate::simulation::SyncedObjects;
-use bevy::prelude::{Children, Commands, default, Entity, EventReader, EventWriter, Query, Res, ResMut, SpriteBundle, Transform, With};
+use bevy::prelude::{Commands, default, Entity, EventReader, EventWriter, Query, Res, ResMut, SpriteBundle, Transform, With};
 use bevy_rapier2d::dynamics::Velocity;
 use bevy::log::info;
 use bevy::hierarchy::BuildChildren;
 use crate::asset_loader::resources::SpriteAssets;
-use crate::client_networking::{ClientId, RecvHealthUpdateEvent, RecvMatchTimeEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvTurretUpdateEvent, RecvYouConnectEvent};
+use crate::client_networking::{ClientId, RecvHealthUpdateEvent, RecvMatchTimeEvent, RecvObjectDespawnEvent, RecvPhysObjUpdateEvent, RecvPlayerConnectEvent, RecvPlayerDataUpdateEvent, RecvPlayerLeaveEvent, RecvPlayerSpawnEvent, RecvYouConnectEvent};
 use crate::simulation::client_sim::PlayerSpawnBuffer;
 use crate::simulation::events::OnPlayerSpawnEvent;
 use crate::simulation::server_sim::match_ffa::MatchTimer;
-use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
+use crate::simulation::server_sim::player::{Health};
 use crate::utils::commands::despawn::CustomDespawnExt;
 use crate::utils::prefabs::{get_player_bundle, get_turret_bundle};
 
@@ -46,25 +46,6 @@ pub fn phys_obj_updater(
             objects.objects.insert(ev.id, init_object(ev, &mut commands, &assets));
         }
     });
-}
-
-pub fn turr_updater(
-    mut update_event: EventReader<RecvTurretUpdateEvent>,
-    objects: ResMut<SyncedObjects>,
-    parent_q: Query<&Children, With<Player>>,
-    mut turr_q: Query<&mut Transform, With<PlayerTurret>>,
-) {
-    update_event.iter().for_each(|ev| {
-        if let Some(&ent) = objects.objects.get(&ev.parent_id) {
-            if let Ok(children) = parent_q.get(ent) {
-                children.iter().for_each(|&child| {
-                    if let Ok(mut turr) = turr_q.get_mut(child) {
-                        turr.rotation = ev.rotation;
-                    }
-                });
-            }
-        }
-    })
 }
 
 fn init_object(event: &RecvPhysObjUpdateEvent, commands: &mut Commands, assets: &SpriteAssets) -> Entity {
@@ -131,14 +112,19 @@ pub fn on_player_spawn(
 
     spawn_buffer.events.iter_mut().for_each(|(cleanup, e)| {
         let Some(entity) = objects.objects.get(&e.object_id) else { return; };
-
         *cleanup = true;
+
+        let turret_entities = objects.objects.iter().filter_map(|(obj, ent)|
+            if e.turret_object_ids.contains(obj) { Some(*ent) } else { None }
+        ).collect::<Vec<Entity>>();
+
+        turret_entities.iter().for_each(|&e| {
+            commands.entity(e).insert(get_turret_bundle(*entity));
+        });
 
         commands.entity(*entity).insert(get_player_bundle(e.player_id, Some(e.position)))
             .insert(Object { id: e.object_id })
-            .with_children(|p| {
-                p.spawn(get_turret_bundle());
-            });
+            .push_children(&turret_entities);
 
         if let Some(mut data) = lobby.player_data.get_mut(&e.player_id) {
             data.object_id = Some(e.object_id);
@@ -148,6 +134,7 @@ pub fn on_player_spawn(
 
         spawn_writer.send(OnPlayerSpawnEvent {
             player_id: e.player_id,
+            turret_object_ids: e.turret_object_ids.clone(),
             object_id: e.object_id,
             position: e.position,
         });

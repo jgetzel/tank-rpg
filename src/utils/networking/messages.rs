@@ -2,23 +2,40 @@ use serde::{Deserialize, Serialize};
 use bevy::prelude::{Vec2, Quat, Transform};
 use bevy::utils::HashMap;
 use crate::asset_loader::components::SpriteEnum;
+use crate::simulation::events::{OnPlayerSpawnEvent};
 use crate::simulation::ObjectId;
 use crate::simulation::PlayerData;
+use crate::simulation::server_sim::player::Health;
 
 pub type PlayerId = u64;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessage {
-    YouConnected { player_id: PlayerId },
-    PlayerConnected { player_id: PlayerId, data: PlayerData },
-    PlayerDisconnected { player_id: PlayerId },
-    ObjectDespawn { object_id: ObjectId },
-    PlayerSpawn { player_id: PlayerId, object_id: ObjectId, position: Vec2 },
-    MatchTimerMsg { time_remaining: f32 },
-    PhysObjUpdate { objects: HashMap<ObjectId, PhysicsObjData> },
-    PlayerDataUpdate { player_id: PlayerId, data: PlayerData }, //TODO find a better way to update K/D count
-    HealthUpdate { object_id: ObjectId, health: f32, max_health: f32 },
-    TurretRotationUpdate { turrets: HashMap<ObjectId, TurretRotationData> } //TODO find a better way
+    Unreliable(ServerUnreliableMessage),
+    Reliable(ServerReliableMessage),
+    Init(ServerInitMessage),
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct ServerUnreliableMessage {
+    pub player_data: HashMap<PlayerId, PlayerData>,
+    pub healths: HashMap<ObjectId, Health>,
+    pub object_data: HashMap<ObjectId, PhysicsObjData>,
+    pub match_timer: Option<f32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct ServerReliableMessage {
+    pub connect_events: Vec<(PlayerId, PlayerData)>,
+    pub disconnect_events: Vec<PlayerId>,
+    pub player_spawn_events: Vec<OnPlayerSpawnEvent>,
+    pub despawn_events: Vec<ObjectId>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+pub struct ServerInitMessage {
+    pub you_connect_event: (PlayerId, PlayerData),
+    pub existing_players: Vec<OnPlayerSpawnEvent>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -17,11 +17,10 @@ impl Plugin for ClientSimulationPlugin {
             .add_systems(
                 (
                     phys_obj_updater,
-                    turr_updater,
                     on_player_join,
                     on_player_leave,
                     on_player_spawn.after(phys_obj_updater),
-                    on_player_update,
+                    on_player_update.after(on_player_spawn),
                     on_health_update,
                     on_timer_update,
                 ).in_set(ClientUpdate).before(on_object_despawn)

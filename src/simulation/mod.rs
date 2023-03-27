@@ -2,7 +2,6 @@ use bevy::app::App;
 use bevy::prelude::{Component, default, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::collections;
 use serde::{Deserialize, Serialize};
 use crate::simulation::events::*;
 use crate::simulation::client_sim::ClientSimulationPlugin;
@@ -28,6 +27,7 @@ impl Plugin for SimulationPlugin {
         app
             .add_event::<OnObjectDespawnEvent>()
             .add_event::<OnPlayerSpawnEvent>()
+            .add_event::<OnPlayerDisconnectEvent>()
             .add_event::<OnPlayerConnectEvent>();
 
     }
@@ -63,7 +63,7 @@ impl Default for Object {
 
 #[derive(Debug, Default, Resource)]
 pub struct Lobby {
-    pub player_data: collections::HashMap<PlayerId, PlayerData>,
+    pub player_data: HashMap<PlayerId, PlayerData>,
 }
 
 impl Lobby {

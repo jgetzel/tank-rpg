@@ -18,16 +18,10 @@ impl Plugin for ServerNetworkingPlugin {
             .add_system(server_recv.in_set(ServerReceive))
             .add_systems(
                 (
-                    server_send_phys_obj,
-                    server_send_turrets,
-                    on_client_connect,
-                    on_client_disconnect,
-                    on_player_spawn,
-                    update_match_timer,
-                    update_health,
-                    update_kill_death_count,
-                ).in_set(ServerSend).before(on_object_despawn))
-            .add_system(on_object_despawn.in_set(ServerSend));
+                    server_send_reliable,
+                    server_send_unreliable,
+                    server_send_init_player,
+                ).in_set(ServerSend));
 
     }
 }

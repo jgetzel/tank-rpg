@@ -9,7 +9,7 @@ pub struct You;
 
 const DEFAULT_HEALTH: f32 = 100.0;
 
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize, Clone, Debug)]
 pub struct Health {
     pub max_health: f32,
     pub health: f32,
@@ -56,6 +56,15 @@ impl Default for PlayerTurret {
             owner: None,
             direction: Vec2::default(),
             bullet_speed: 600.,
+        }
+    }
+}
+
+impl PlayerTurret {
+    pub fn new(owner: Entity) -> Self {
+        PlayerTurret {
+            owner: Some(owner),
+            ..Default::default()
         }
     }
 }

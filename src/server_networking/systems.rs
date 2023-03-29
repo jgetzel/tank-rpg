@@ -63,7 +63,7 @@ pub fn server_send_unreliable(
     };
 
     server.endpoint().broadcast_message_on(
-        ChannelId::Unreliable,
+        ChannelId::UnorderedReliable,
         ServerMessage::Unreliable(message),
     ).unwrap();
 }

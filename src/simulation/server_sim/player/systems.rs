@@ -3,16 +3,8 @@ use bevy_rapier2d::dynamics::Velocity;
 use bevy::math::{Quat, Vec3};
 use crate::simulation::server_sim::player::components::PlayerInput;
 use crate::simulation::server_sim::player::{Player, PlayerTurret};
-use crate::simulation::server_sim::player::utils::calc_player_next_velocity;
-
-pub fn player_move(
-    mut query: Query<(&mut Velocity, &Player, &PlayerInput)>,
-    time: Res<Time>,
-) {
-    query.iter_mut().for_each(|(mut vel, player, input)| {
-        vel.linvel = calc_player_next_velocity(vel.linvel, player, input, time.delta_seconds());
-    });
-}
+use crate::simulation::server_sim::player::movement_state_machine::MovementStateMachine;
+use crate::utils::math::state_machine::StateMachine;
 
 pub fn player_turret_rotate(
     player_q: Query<(&Children, &PlayerInput), With<Player>>,
@@ -27,6 +19,15 @@ pub fn player_turret_rotate(
                 trans.rotation = Quat::from_axis_angle(Vec3::new(0., 0., 1.), angle);
             }
         });
+    });
+}
+
+pub fn movement_machine_update(
+    mut query: Query<(&mut Velocity, &Player, &PlayerInput, &mut MovementStateMachine)>,
+    time: Res<Time>,
+) {
+    query.iter_mut().for_each(|(mut vel, player, input, mut sm)| {
+        sm.update( (player, input, &mut vel, time.delta_seconds()));
     });
 }
 

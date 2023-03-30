@@ -1,4 +1,5 @@
 pub mod polygon;
+pub mod state_machine;
 
 pub fn seconds_to_formatted_time_string(time_remaining_int: u32) -> String {
     let seconds = time_remaining_int % 60;

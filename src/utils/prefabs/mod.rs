@@ -8,6 +8,7 @@ use crate::asset_loader::components::SpriteEnum;
 use crate::display::camera::MainCamera;
 use crate::simulation::server_sim::player::{Health, Player, PlayerTurret};
 use crate::display::sprite_updater::{AutoSorted, BACKGROUND_LAYER, CAMERA_LAYER, PLAYER_LAYER};
+use crate::simulation::server_sim::player::movement_state_machine::MovementStateMachine;
 use crate::simulation::server_sim::spawn::SpawnPoint;
 
 const TREE_ANCHOR: [f32; 2] = [0., -0.22];
@@ -90,6 +91,7 @@ pub fn get_player_bundle(id: u64, position: Option<Vec2>) -> impl Bundle {
         Name::from(format!("Player {id}")),
         AutoSorted,
         Player::new(id),
+        MovementStateMachine::default(),
         Health::default(),
         SpriteEnum::TankDefault,
         SpatialBundle {

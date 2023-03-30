@@ -1,4 +1,5 @@
 pub mod components;
+pub mod movement_state_machine;
 mod systems;
 mod utils;
 
@@ -21,7 +22,7 @@ impl Plugin for PlayerPlugin {
             .add_event::<OnHealthChangedEvent>()
             .add_systems(
                 (
-                    systems::player_move,
+                    systems::movement_machine_update,
                     systems::player_turret_rotate
                 ).in_set(ServerUpdate)
             );

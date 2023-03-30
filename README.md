@@ -21,7 +21,7 @@ counts for each player, and players respawn at the least crowded spawn location 
 Matches currently last for 5 minutes, and after 10 seconds matches restart. Players can join and disconnect at any time.
 
 Next steps are:
-- More user friendly UI for hosting and joining servers (Scan LAN ports for servers, etc).
+- Switch Network protocols for once that more easily allows matchmaking (matchbox?) and more friendly UI for hosting and joining servers.
 - More complex movement options such as boosting, dodging, shielding
 
 Further into the future, this project will have:
